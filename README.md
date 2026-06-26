@@ -35,6 +35,12 @@ reny
 reny -r -in '*.txt' index
 ```
 
+**Limit Recursion Depth (`-el`):**
+Use `-el` (end level) to control exactly how deep `reny` recurses. For example, to add an index only to files inside immediate subdirectories (depth 1), while ignoring deeper nested folders:
+```bash
+reny -r -el 1 index
+```
+
 **Pad existing numbers with leading zeros (e.g., `2 kms.png` becomes `02 kms.png`):**
 ```bash
 reny pad -md 2
@@ -72,6 +78,21 @@ Virtual view by date:
       |- document.pdf
     |- 02/
       |- image.png
+```
+
+### Real-World Scenario: Downloads Cleanup
+A safe, two-step workflow to tame a chaotic downloads folder by grouping files by their extension and sorting them by size to see what's eating up your disk space.
+
+**Step 1: Preview the cleanup with size statistics**
+*(Shows you the largest file categories first, without moving any files)*
+```bash
+reny -s sd print -b type -ss
+```
+
+**Step 2: Commit the organization**
+*(Actually moves the files into their respective subdirectories)*
+```bash
+reny organize -b type
 ```
 
 ## Documentation & Tutorials
