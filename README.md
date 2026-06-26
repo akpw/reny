@@ -80,4 +80,35 @@ Although `reny` is a standalone project, its core organizing logic is inherited 
 - [Practical BatchMP Series](https://akpw.github.io//tags.html#BatchMP+Tools)
 
 ## Usage
-Run `reny --help` to see all available filesystem operations
+Run `reny --help` to see all available filesystem operations!
+
+## Development
+To set up the project for development:
+
+1. Clone the repository and navigate into it:
+   ```bash
+   git clone https://github.com/akpw/reny.git
+   cd reny
+   ```
+2. Create and activate a virtual environment:
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
+3. Install the project in editable mode along with testing dependencies:
+   ```bash
+   pip install -e ".[test]"
+   ```
+
+## Running Tests
+The project uses `pytest` for its test suite. Because `reny` performs real filesystem operations, the tests are designed to dynamically create and clean up safe temporary sandbox folders during execution.
+
+To run the full test suite:
+```bash
+pytest -v --tb=short tests/
+```
+
+To run a specific test file:
+```bash
+pytest tests/fs/test_fs_organize.py
+```
