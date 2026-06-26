@@ -76,6 +76,7 @@ class RenamerCommands(BatchMPBaseCommands):
     DELETE = 'delete'
     STATS = 'stats'
     ORGANIZE = 'organize'
+    PAD = 'pad'
 
     @classmethod
     def commands_meta(cls):
@@ -89,10 +90,11 @@ class RenamerCommands(BatchMPBaseCommands):
                         '{}, '.format(cls.CAPITALIZE),
                         '{}, '.format(cls.FLATTEN),
                         '{}, '.format(cls.DELETE),
-                        '{}, '.format(cls.STATS),                        
+                        '{}, '.format(cls.STATS),
                         '{}, '.format(cls.INFO),
                         '{}, '.format(cls.VERSION),
-                        '{}'  .format(cls.ORGANIZE),
+                        '{}, '.format(cls.ORGANIZE),
+                        '{}'  .format(cls.PAD),
                         '}'))
 
 
@@ -101,7 +103,7 @@ class RenameArgParser(BatchMPArgParser):
     '''
     def __init__(self):
         self._script_name = 'Reny'
-        
+
         self._description = '''
         Reny is a multi-platform batch rename tool. In addition to common rename
         operations such as regexp-based replace, adding text / dates, etc. it also
@@ -156,7 +158,7 @@ class RenameArgParser(BatchMPArgParser):
         stats_parser.add_argument('-ss', '--show-size', dest = 'show_size',
                 help ='Show files size',
                 action = 'store_true')
-        
+
 
         # Flatten
         flatten_parser = subparsers.add_parser(RenamerCommands.FLATTEN,
@@ -208,6 +210,17 @@ class RenameArgParser(BatchMPArgParser):
                 default = 2)
         _add_include_mode_group(add_index_parser)
         self._add_arg_display_curent_state_mode(add_index_parser)
+
+        # Pad Numbers
+        pad_parser = subparsers.add_parser(RenamerCommands.PAD,
+                                                description = 'Pads numbers in files and directories names with leading zeros',
+                                                formatter_class = BatchMPHelpFormatter)
+        pad_parser.add_argument('-md', '--min-digits', dest = 'min_digits',
+                help = 'Minimal number of digits to pad to (2 by default, and adding leading zeros as needed)',
+                type = int,
+                default = 2)
+        _add_include_mode_group(pad_parser)
+        self._add_arg_display_curent_state_mode(pad_parser)
 
         # Add Date
         add_date_parser = subparsers.add_parser(RenamerCommands.ADD_DATE,

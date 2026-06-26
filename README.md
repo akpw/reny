@@ -2,9 +2,9 @@
 A lightweight, fast, and safe batch renaming and filesystem organization tool.
 
 ## Background
-`reny` was originally born as the `renamer` component inside the larger [`batchmp`](https://github.com/akpw/batch-mp-tools) (Batch Media Processing) suite. It was spun off into its own standalone package to provide developers with an ultra-lightweight, pure-filesystem organizing tool without the heavy baggage of FFmpeg and Mutagen media dependencies. 
+`reny` was originally created as the `renamer` component inside the larger [`batchmp`](https://github.com/akpw/batch-mp-tools) (Batch Media Processing) suite. It was spun off into its own standalone package to provide for an ultra-lightweight, safe, pure-filesystem organizing tool without FFmpeg / Mutagen media dependencies. 
 
-If you need advanced media operations (like denoising, cover-art extraction, or format transcoding), check out the original [`batchmp`](https://github.com/akpw/batch-mp-tools) project. If you just need to organize your files with surgical precision, `reny` is all you need!
+If you need advanced media operations (like denoising, cover-art extraction, or format transcoding), check out the original [`batchmp`](https://github.com/akpw/batch-mp-tools) project. If you just need to safely organize your files with surgical precision, `reny` is all you need.
 
 ## Installation
 You can install `reny` globally using pipx:
@@ -13,10 +13,12 @@ pipx install .
 ```
 
 ## Features
-- **Regex Replacement:** Powerful batch renaming using standard regular expressions.
-- **Flattening:** Safely collapse nested directory structures into a single folder.
-- **Virtual Views:** Preview how a directory will look when sorted by size, date, or type before making any changes.
-- **Dry-Run by Default:** `reny` will always visualize targeted changes and ask for confirmation before it ever touches your files.
+- **Virtual Views:** Preview how a directory structure would look when reorganised by type, size, or date without moving or changing anything
+- **Indexing:** Multi-level indexing across nested directories, supporting multiple indexing schemes
+- **Padding:** Automatically pad existing numbers in filenames with leading zeros to fix sorting orders
+- **Flattening:** Safely collapse nested directory structures into a single folder
+- **Regex Replacement:** Powerful batch renaming using standard regular expressions
+- **Dry-Run by Default:** `reny` will always visualize targeted changes and ask for confirmation before it ever touches your files
 
 ## Examples
 
@@ -30,6 +32,11 @@ reny
 **Add a sequential index to all `.txt` files recursively:**
 ```bash
 reny -r -in '*.txt' index
+```
+
+**Pad existing numbers with leading zeros (e.g., `2 kms.png` becomes `02 kms.png`):**
+```bash
+reny pad -md 2
 ```
 
 **Regex Replace:**
@@ -67,10 +74,10 @@ Virtual view by date:
 ```
 
 ## Documentation & Tutorials
-Although `reny` is a new standalone project, its core organizing logic is inherited directly from [`batchmp`](https://github.com/akpw/batch-mp-tools). You can find detailed tutorials and deep-dives on how to master its capabilities in the original blog posts:
-- [Renamer Organize & Virtual Views](https://akpw.github.io/articles/2025/09/22/Print-and-Organize.html) – *Highly recommended reading for mastering virtual directory views!*
+Although `reny` is a standalone project, its core organizing logic is inherited directly from [`batchmp`](https://github.com/akpw/batch-mp-tools). You can find detailed tutorials and deep-dives on how to master its capabilities in the original blog posts:
+- [Renamer Organize & Virtual Views](https://akpw.github.io/articles/2025/09/22/Print-and-Organize.html) – *Highly recommended reading for mastering virtual directory views*
 - [BatchMP Tools Tutorial, Part II: renaming files with renamer](https://akpw.github.io/articles/2015/04/11/batchmp-tutorial-part-ii.html)
 - [Practical BatchMP Series](https://akpw.github.io//tags.html#BatchMP+Tools)
 
 ## Usage
-Run `reny --help` to see all available filesystem operations!
+Run `reny --help` to see all available filesystem operations

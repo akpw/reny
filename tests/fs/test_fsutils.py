@@ -60,7 +60,7 @@ class FSTests(FSTest):
 
         fsf_entry_params = self._fs_entry(flatten = True)
         DHandler.flatten_folders(fsf_entry_params, remove_non_empty_folders = True)
-        
+
         fcnt, dcnt, _ = DHandler.dir_stats(fs_entry_params)
         self.assertTrue(fcnt == fcnt_orig, msg = '{0} files, should be {1}'.format(fcnt, fcnt_orig))
         self.assertTrue(dcnt == 0, msg = '{} directories, should be 0'.format(dcnt))
@@ -77,10 +77,21 @@ class FSTests(FSTest):
         fcnt, _, _ = DHandler.dir_stats(fs_entry_params)
         self.assertTrue(fcnt == fcnt_orig, msg = '{0} files, should be {1}'.format(fcnt, fcnt_orig))
 
+    def test_pad_numbers(self):
+        test_file = os.path.join(self.src_dir, '2_test_file_2023.txt')
+        with open(test_file, 'w') as f:
+            f.write('test data')
+
+        fs_entry_params = self._fs_entry(include = '2_test_file*')
+        Reny.pad(fs_entry_params, min_digits=3)
+
+        self.assertTrue(os.path.exists(os.path.join(self.src_dir, '002_test_file_2023.txt')), "First number should be padded")
+        self.assertFalse(os.path.exists(os.path.join(self.src_dir, '002_test_file_002023.txt')), "Second number should NOT be padded")
+
     @unittest.skipIf(os.name == 'nt', 'skipping for windows')
     def test_reny_add_index_sequential(self):
         ## python -m unittest tests.fs.test_fsutils.FSTests.test_reny_add_index_sequential
-        fs_entry_params = self._fs_entry(end_level = 5, include = 'last*')        
+        fs_entry_params = self._fs_entry(end_level = 5, include = 'last*')
         fcnt_orig, _, _ = DHandler.dir_stats(fs_entry_params)
 
         join_str = ' '
@@ -93,7 +104,7 @@ class FSTests(FSTest):
     @unittest.skipIf(os.name == 'nt', 'skipping for windows')
     def test_reny_add_index_multilevel(self):
         ## python -m unittest tests.fs.test_fsutils.FSTests.test_reny_add_index_multilevel
-        fs_entry_params = self._fs_entry(end_level = 5, include = '[!.]*', exclude = 'test_*', filter_dirs = False)        
+        fs_entry_params = self._fs_entry(end_level = 5, include = '[!.]*', exclude = 'test_*', filter_dirs = False)
         fcnt_orig, _, _ = DHandler.dir_stats(fs_entry_params)
 
         join_str = ' '
@@ -107,7 +118,7 @@ class FSTests(FSTest):
     @unittest.skipIf(os.name == 'nt', 'skipping for windows')
     def test_remove_n_characters(self):
         ## python -m unittest tests.fs.test_fsutils.FSTests.test_remove_n_characters
-        fs_entry_params = self._fs_entry(end_level = 2, include = 'test_[0-9]')        
+        fs_entry_params = self._fs_entry(end_level = 2, include = 'test_[0-9]')
         fcnt_orig, _, _ = DHandler.dir_stats(fs_entry_params)
 
         Reny.remove_n_characters(fs_entry_params, num_chars = 2, from_head = True)
@@ -120,7 +131,7 @@ class FSTests(FSTest):
     @unittest.skipIf(os.name == 'nt', 'skipping for windows')
     def test_add_text(self):
         ## python -m unittest tests.fs.test_fsutils.FSTests.test_add_text
-        fs_entry_params = self._fs_entry(end_level = 4, filter_dirs = False)        
+        fs_entry_params = self._fs_entry(end_level = 4, filter_dirs = False)
         fcnt_orig, _, _ = DHandler.dir_stats(fs_entry_params)
 
         join_str = ' '
@@ -134,7 +145,7 @@ class FSTests(FSTest):
     @unittest.skipIf(os.name == 'nt', 'skipping for windows')
     def test_add_date(self):
         ## python -m unittest tests.fs.test_fsutils.FSTests.test_add_date
-        fs_entry_params = self._fs_entry(end_level = 5, filter_dirs = False)        
+        fs_entry_params = self._fs_entry(end_level = 5, filter_dirs = False)
         fcnt_orig, _, _ = DHandler.dir_stats(fs_entry_params)
 
         join_str = '_'
@@ -151,7 +162,7 @@ class FSTests(FSTest):
         fs_entry_params_all_files = self._fs_entry(end_level = 4)
         fcnt_all, _, _ = DHandler.dir_stats(fs_entry_params_all_files)
 
-        fs_entry_params = self._fs_entry(end_level = 4, include = '*week*')        
+        fs_entry_params = self._fs_entry(end_level = 4, include = '*week*')
         fcnt_del, _, _ = DHandler.dir_stats(fs_entry_params)
 
         Reny.delete(fs_entry_params)
@@ -168,10 +179,10 @@ class FSTests(FSTest):
         fs_entry_params_all_files = self._fs_entry(end_level = 5, filter_files = False)
         fcnt_all, dcnt_all, _ = DHandler.dir_stats(fs_entry_params_all_files)
 
-        fs_del_entry_params = self._fs_entry(end_level = 5, 
-                                            include = 'nested_c;nested_a*', 
-                                            filter_files = False, 
-                                            include_dirs = True)        
+        fs_del_entry_params = self._fs_entry(end_level = 5,
+                                            include = 'nested_c;nested_a*',
+                                            filter_files = False,
+                                            include_dirs = True)
         fcnt_del, dcnt_del, _ = DHandler.dir_stats(fs_del_entry_params)
 
         Reny.delete(fs_del_entry_params)
@@ -201,8 +212,8 @@ class FSTests(FSTest):
         self.assertTrue(fcnt == fcnt_remaining, msg = '{0} files, should be {1}'.format(fcnt, fcnt_remaining))
 
 
-    def _fs_entry(self, include =  FSEntryDefaults.DEFAULT_INCLUDE, exclude =  FSEntryDefaults.DEFAULT_EXCLUDE, 
-                        filter_dirs = True, filter_files = True, 
+    def _fs_entry(self, include =  FSEntryDefaults.DEFAULT_INCLUDE, exclude =  FSEntryDefaults.DEFAULT_EXCLUDE,
+                        filter_dirs = True, filter_files = True,
                         file_type = FSEntryDefaults.DEFAULT_FILE_TYPE,
                         include_dirs = False, include_files = True, quiet = True,
                         end_level = sys.maxsize, start_level = 0, flatten = False, target_level = 0, display_current = False, show_size = False):
@@ -223,7 +234,7 @@ class FSTests(FSTest):
             'display_current' : display_current,
             'quiet' : quiet
         }
-        
+
         fs_entry_params = FSEntryParamsExt(args) if not flatten else FSEntryParamsFlatten(args)
 
         return fs_entry_params

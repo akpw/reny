@@ -40,6 +40,9 @@ class RenameDispatcher(BatchMPDispatcher):
             elif args['sub_cmd'] == RenamerCommands.INDEX:
                 self.add_index(args)
 
+            elif args['sub_cmd'] == RenamerCommands.PAD:
+                self.pad(args)
+
             elif args['sub_cmd'] == RenamerCommands.ADD_DATE:
                 self.add_date(args)
 
@@ -90,14 +93,20 @@ class RenameDispatcher(BatchMPDispatcher):
 
     def add_index(self, args):
         fs_entry_params = FSEntryParamsExt(args)
-        Renamer.add_index(fs_entry_params, 
+        Renamer.add_index(fs_entry_params,
                 as_prefix = not args['as_suffix'], join_str = args['join_str'],
                 start_from = args['start_from'], min_digits = args['min_digits'],
                 sequential = args['sequential'], by_directory = args['by_directory'])
 
+    def pad(self, args):
+        ''' Dispatch pad
+        '''
+        fs_entry_params = FSEntryParamsExt(args)
+        Renamer.pad(fs_entry_params, args['min_digits'])
+
     def add_date(self, args):
         fs_entry_params = FSEntryParamsExt(args)
-        Renamer.add_date(fs_entry_params, 
+        Renamer.add_date(fs_entry_params,
                 as_prefix = args['as_prefix'], join_str = args['join_str'], format = args['format'])
 
     def add_text(self, args):
@@ -111,7 +120,7 @@ class RenameDispatcher(BatchMPDispatcher):
 
     def replace(self, args):
         fs_entry_params = FSEntryParamsExt(args)
-        Renamer.replace(fs_entry_params, 
+        Renamer.replace(fs_entry_params,
                 find_str = args['find_str'],
                 replace_str = args['replace_str'] if 'replace_str' in args else None,
                 case_insensitive = args['ignore_case'],
@@ -128,7 +137,7 @@ class RenameDispatcher(BatchMPDispatcher):
     def organize(self, args):
         fs_entry_params = FSEntryParamsOrganize(args)
         DHandler.organize(fs_entry_params)
-    
+
 def main():
     ''' Renamer entry point
     '''

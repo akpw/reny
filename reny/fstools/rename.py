@@ -142,6 +142,35 @@ class Renamer:
             DHandler.rename_entries(fs_entry_params, total_files + total_dirs, formatter = add_index_transform)
 
     @classmethod
+    def pad(cls, fs_entry_params, min_digits):
+        ''' pads numbers in files and directories names with leading zeros
+        '''
+        import re
+        def pad_transform(entry):
+            if entry.type == FSEntryType.ROOT:
+                return entry.basename
+            if entry.type == FSEntryType.DIR and not fs_entry_params.include_dirs:
+                return entry.basename
+            if entry.type == FSEntryType.FILE and not fs_entry_params.include_files:
+                return entry.basename
+            
+            def pad_match(m):
+                return m.group(0).zfill(min_digits)
+            return re.sub(r'\d+', pad_match, entry.basename, count=1)
+
+        # visualise changes and proceed if confirmed
+        if fs_entry_params.quiet:
+            proceed = True
+            total_files, total_dirs, _ = DHandler.dir_stats(fs_entry_params)
+        else: 
+            proceed, total_files, total_dirs = DHandler.visualise_changes(fs_entry_params, formatter = pad_transform)
+
+        if proceed:
+            if (total_dirs + total_files) == 0:
+                total_files, total_dirs, _ = DHandler.dir_stats(fs_entry_params)
+            DHandler.rename_entries(fs_entry_params, total_files + total_dirs, formatter = pad_transform)
+
+    @classmethod
     def capitalize(cls, fs_entry_params):
         ''' capitalizes names of FS entries
         '''
