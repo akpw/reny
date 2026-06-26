@@ -22,8 +22,7 @@ def check_version():
     if sys.version_info.major < 3:
         print(\
         '''
-        Batch Media Processing Tools require
-                           Python version 3.6 or later.
+        Reny requires Python version 3.6 or later.
 
         You can create an isolated Python 3.6 environment
         with the virtualenv tool:
@@ -35,8 +34,7 @@ def check_version():
         print(\
         '''
 
-        Batch Media Processing Tools require
-                            Python version 3.6 or later.
+        Reny requires Python version 3.6 or later.
 
         Please upgrade to the latest Python 3.x version.
 

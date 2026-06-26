@@ -105,11 +105,12 @@ class RenameArgParser(BatchMPArgParser):
         self._script_name = 'Reny'
 
         self._description = '''
-        Reny is a multi-platform batch rename tool. In addition to common rename
-        operations such as regexp-based replace, adding text / dates, etc. it also
-        supports multi-level indexing across nested directories, flattening folders,
-        and cleaning up non-media files. As default behavior, Reny visualises
-        targeted changes and ask for confirmation before actually changing anything.
+        Reny is a lightweight, powerful batch renaming and filesystem organizing CLI tool.
+        In addition to common rename operations such as regexp-based replace, padding
+        numbers, and adding text/dates, it also supports multi-level indexing across
+        nested directories, flattening folders, and generating virtual views. As default
+        behavior, Reny visualizes targeted changes and asks for confirmation before
+        actually changing anything on your filesystem.
         '''
     # Args Parsing
     def parse_commands(self, parser):

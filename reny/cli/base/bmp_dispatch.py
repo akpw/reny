@@ -41,13 +41,13 @@ class BatchMPDispatcher:
 
     # Dispatched methods
     def print_version(self):
-        ''' Prints BatchMP version info
+        ''' Prints version info
         '''
         version = metadata.version("reny")
-        print('BatchMP tools version {}'.format(version))
+        print('Reny version {}'.format(version))
 
     def print_info(self):
-        print('\nBatch Media Processing Tools: {}'.format(self.option_parser.script_name))
+        print('\n{}'.format(self.option_parser.script_name.capitalize()))
         print(self.option_parser.description)
 
 def main():
