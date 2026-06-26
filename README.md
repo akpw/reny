@@ -7,10 +7,11 @@ A lightweight, fast, and safe batch renaming and filesystem organization tool.
 If you need advanced media operations (like denoising, cover-art extraction, or format transcoding), check out the original [`batchmp`](https://github.com/akpw/batch-mp-tools) project. If you just need to safely organize your files with surgical precision, `reny` is all you need.
 
 ## Installation
-You can install `reny` globally using pipx:
+You can safely install `reny` from the [PyPI package](https://pypi.org/project/reny) using [pipx](https://pypa.github.io/pipx/):
 ```bash
-pipx install .
+pipx install reny
 ```
+*(Note: If this is your first time using `pipx`, you may need to run `pipx ensurepath` once to ensure the installed tools are available in your terminal).*
 
 ## Features
 - **Virtual Views:** Preview how a directory structure would look when reorganised by type, size, or date without moving or changing anything
