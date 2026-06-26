@@ -1,0 +1,21 @@
+# Environments
+.venv/
+venv/
+env/
+
+# Python caches
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Testing
+.pytest_cache/
+.coverage
+
+# Builds
+build/
+dist/
+*.egg-info/
+
+# macOS
+.DS_Store
