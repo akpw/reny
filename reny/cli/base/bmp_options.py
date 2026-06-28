@@ -119,6 +119,10 @@ class BatchMPArgParser:
                     help = "Exclude: Unix-style name patterns separated by ';' (excludes hidden files by default)",
                     type = str,
                     default =  FSEntryDefaults.DEFAULT_EXCLUDE)
+        include_mode_group.add_argument("-ig", "--ignore-file", dest = "ignore_file",
+                    help = "Ignore file: Read Unix-style name patterns from a custom file",
+                    type = str,
+                    default = None)
         include_mode_group.add_argument("-ad", "--all-dirs", dest = "all_dirs",
                     help = "Disable Include/Exclude patterns on directories",
                     action = 'store_true')
@@ -170,6 +174,29 @@ class BatchMPArgParser:
         '''
         # check if there is a cmd to execute
         self.check_cmd_args(args, parser)
+
+        # ignore file processing
+        ignore_path = None
+        if args.get('ignore_file'):
+            ignore_path = os.path.abspath(args['ignore_file']) if os.path.isabs(args['ignore_file']) else os.path.join(args.get('dir', '.'), args['ignore_file'])
+        else:
+            local_ignore = os.path.join(args.get('dir', '.'), '.renyignore')
+            if os.path.exists(local_ignore):
+                ignore_path = local_ignore
+            else:
+                global_ignore = os.path.expanduser('~/.renyignore')
+                if os.path.exists(global_ignore):
+                    ignore_path = global_ignore
+
+        if ignore_path and os.path.exists(ignore_path):
+            with open(ignore_path, 'r') as f:
+                patterns = [line.strip().rstrip('/') for line in f if line.strip() and not line.startswith('#')]
+                if patterns:
+                    ignore_str = ';'.join(patterns)
+                    if args.get('exclude'):
+                        args['exclude'] += ';' + ignore_str
+                    else:
+                        args['exclude'] = ignore_str
 
         # if input source is a file, need to adjust
         if args['file']:
