@@ -16,7 +16,7 @@ pipx install reny
 ## Features
 - **Dry-Run by Default:** `reny` will always visualize targeted changes and ask for confirmation before it ever touches your files 
 - **Virtual Views:** Preview how a directory structure would look when reorganised by type, size, or date without moving or changing anything
-- **Filtering & Leveling:** Precise targeting using include/exclude patterns and recursion control with 'end_level` / `start_level` parameters
+- **Filtering & Leveling:** Precise targeting using include/exclude patterns and recursion control with `end_level` / `start_level` parameters
 - **Indexing:** Multi-level indexing across nested directories, supporting multiple indexing schemes
 - **Padding:** Automatically pad existing numbers in filenames with leading zeros to fix sorting orders
 - **Flattening:** Safely collapse nested directory structures into a single folder
