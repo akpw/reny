@@ -2,7 +2,7 @@
 A lightweight, fast, and safe batch renaming and filesystem organization tool.
 
 ## Background
-`reny` was originally created as the `renamer` component inside the larger [`batchmp`](https://github.com/akpw/batch-mp-tools) (Batch Media Processing) suite. It was spun off into its own standalone package to provide for an ultra-lightweight, safe, pure-filesystem organizing tool without FFmpeg / Mutagen media dependencies. 
+`reny` was originally created as the `renamer` component inside the larger [`batchmp`](https://github.com/akpw/batch-mp-tools) (Batch Media Processing) suite. It was spun off into its own standalone package to provide for a lightweight, safe, pure-filesystem organizing tool without FFmpeg / Mutagen media dependencies. 
 
 If you need advanced media operations (like denoising, cover-art extraction, or format transcoding), check out the original [`batchmp`](https://github.com/akpw/batch-mp-tools) project. If you just need to safely organize your files with surgical precision, `reny` is all you need.
 
