@@ -6,7 +6,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md'), encoding='utf-8'
 
 setup(
     name="reny",
-    version="1.0.3",
+    version="1.0.4",
     description="A lightweight, powerful batch renaming and filesystem organizing CLI tool.",
     long_description=long_description,
     long_description_content_type="text/markdown",

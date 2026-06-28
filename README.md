@@ -80,6 +80,58 @@ Virtual view by date:
       |- image.png
 ```
 
+### Ignore Files (.renyignore)
+By default, `reny` will automatically detect a `.renyignore` file in your target directory (falling back to a global `~/.renyignore` if none is found) to cleanly exclude specific directories from processing. 
+
+You can also explicitly pass any file, like a standard `.gitignore`, to automatically parse and exclude those paths from the output:
+```bash
+reny -r -el 2 -ig .gitignore
+```
+```text
+~/Desktop/_Dev/reny
+  |- LICENSE
+  |- pyproject.toml
+  |- README.md
+  |- setup.py
+  |->/reny
+    |- __init__.py
+    |->/cli
+      |- __init__.py
+      |-/base
+      |-/renamer
+    |->/commons
+      |- __init__.py
+      |- chainedhandler.py
+      |- descriptors.py
+      |- progressbar.py
+      |- taskprocessor.py
+      |- utils.py
+    |->/fstools
+      |- __init__.py
+      |- dirtools.py
+      |- fsutils.py
+      |- rename.py
+      |- virtual_organizer.py
+      |- walker.py
+      |-/builders
+  |->/tests
+    |- __init__.py
+    |->/base
+      |- __init__.py
+      |- test_base.py
+    |->/commons
+      |- __init__.py
+      |- test_commons.py
+      |- test_ignore.py
+    |->/fs
+      |- __init__.py
+      |- test_fs_base.py
+      |- test_fs_organize.py
+      |- test_fsutils.py
+      |-/data
+28 files, 12 folders
+```
+
 ### Real-World Scenario: Downloads Cleanup
 A safe, two-step workflow to tame a chaotic downloads folder by grouping files by their extension and sorting them by size to see what's eating up your disk space.
 

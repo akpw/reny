@@ -1,0 +1,27 @@
+# macOS / Windows OS artifacts
+.DS_Store
+Thumbs.db
+
+# Environments
+.venv
+venv
+env
+
+# Python specific
+__pycache__
+*.py[cod]
+*.pyo
+
+# Build and Distribution
+build
+dist
+*.egg-info
+*.egg
+
+# Testing
+.pytest_cache
+.coverage
+.tox
+
+# Specific files
+__init__.py
