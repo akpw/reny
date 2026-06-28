@@ -33,6 +33,9 @@ class BatchMPDispatcher:
         elif args['sub_cmd'] == BatchMPBaseCommands.INFO:
             self.print_info()
 
+        elif args['sub_cmd'] == BatchMPBaseCommands.IGNORE:
+            self.generate_ignore(args.get('global_ignore', False), args.get('dir', '.'))
+
         else:
             # nothing to dispatch
             return False
@@ -49,6 +52,23 @@ class BatchMPDispatcher:
     def print_info(self):
         print('\n{}'.format(self.option_parser.script_name.capitalize()))
         print(self.option_parser.description)
+
+    def generate_ignore(self, is_global, target_dir):
+        import os
+        import shutil
+        template_src = os.path.join(os.path.dirname(__file__), 'renyignore.template')
+        
+        if not os.path.exists(template_src):
+            print("Reny: error: Could not find renyignore.template")
+            return
+
+        target_path = os.path.expanduser('~/.renyignore') if is_global else os.path.join(target_dir, '.renyignore')
+        if os.path.exists(target_path):
+            print(f"Reny: error: '{target_path}' already exists. Aborting to prevent overwrite.")
+            return
+
+        shutil.copy(template_src, target_path)
+        print(f"Successfully generated template at: {target_path}")
 
 def main():
     ''' BatchMP entry point

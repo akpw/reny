@@ -42,12 +42,14 @@ from reny.fstools.builders.fsentry import FSEntry, FSEntryDefaults
 class BatchMPBaseCommands:
     VERSION = 'version'
     INFO = 'info'
+    IGNORE = 'ignore'
     PRINT = 'print'
 
     @classmethod
     def commands_meta(cls):
         return ''.join(('{',
                         '{}, '.format(cls.INFO),
+                        '{}, '.format(cls.IGNORE),
                         '{}'.format(cls.VERSION),
                         '}'))
 
@@ -152,6 +154,7 @@ class BatchMPArgParser:
                                                 metavar = BatchMPBaseCommands.commands_meta())
         self._add_version(subparsers)
         self._add_info(subparsers)
+        self._add_ignore(subparsers)
 
     # Args checking
     def check_cmd_args(self, args, parser,
@@ -337,6 +340,17 @@ class BatchMPArgParser:
         parser.add_parser(BatchMPBaseCommands.INFO,
                                 description = 'Displays BatchMP info',
                                         formatter_class=BatchMPHelpFormatter)
+
+    @staticmethod
+    def _add_ignore(parser):
+        ''' Adds the ignore command
+        '''
+        init_parser = parser.add_parser(BatchMPBaseCommands.IGNORE,
+                                description = 'Generates a default .renyignore template file',
+                                        formatter_class=BatchMPHelpFormatter)
+        init_parser.add_argument('-g', '--global', dest='global_ignore',
+                                 action='store_true',
+                                 help='Generate the template globally (~/.renyignore)')
 
 
 
