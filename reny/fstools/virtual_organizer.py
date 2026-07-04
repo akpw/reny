@@ -109,6 +109,8 @@ class VirtualOrganizer:
             'end_level': max_depth
         })
         preview_params.src_dir = self.fs_entry_params.src_dir
+        preview_params.color = getattr(self.fs_entry_params, 'color', 1)
+        preview_params.git = getattr(self.fs_entry_params, 'git', False)
         # Override builder for preview
         preview_params.__dict__['fs_entry_builder'] = FSEntryBuilderOrganize()
         return preview_params        
@@ -249,6 +251,10 @@ class VirtualOrganizer:
             preview_params.src_dir = self.fs_entry_params.src_dir
             preview_params.sort = self.fs_entry_params.sort
         
+        # Pass through git and color options
+        preview_params.color = getattr(self.fs_entry_params, 'color', 1)
+        preview_params.git = getattr(self.fs_entry_params, 'git', False)
+
         # Override builder for preview
         preview_params.__dict__['fs_entry_builder'] = FSEntryBuilderOrganize()
         return preview_params
