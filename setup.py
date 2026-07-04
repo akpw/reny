@@ -23,7 +23,6 @@ setup(
     },
     url='https://github.com/akpw/reny',
     author='Arseniy Kuznetsov',
-    author_email='k.arseniy@gmail.com',
     license='GNU General Public License v2 (GPLv2)',
     keywords='Batch Rename Organizer File System Management',
     python_requires='>=3.9',

@@ -12,7 +12,7 @@
 ## GNU General Public License for more details.
 
 
-import os, sys
+import os, sys, subprocess
 from collections import namedtuple
 from collections.abc import Iterable
 from reny.commons.utils import strtobool
@@ -49,6 +49,26 @@ class DHandler:
         total_size = 0
         shared_cache = {}
 
+        git_statuses = {}
+        if getattr(fs_entry_params, 'git', False):
+            try:
+                res = subprocess.run(['git', '-C', fs_entry_params.src_dir, 'status', '--porcelain'], capture_output=True, text=True)
+                for line in res.stdout.splitlines():
+                    if len(line) > 3:
+                        status = line[:2]
+                        rel_path = line[3:]
+                        full_path = os.path.join(fs_entry_params.src_dir, rel_path)
+                        git_statuses[full_path] = status
+                        
+                        # Propagate status to parent directories
+                        parent_dir = os.path.dirname(full_path)
+                        while parent_dir and parent_dir != fs_entry_params.src_dir and parent_dir != '/':
+                            if parent_dir not in git_statuses:
+                                git_statuses[parent_dir] = '* ' # asterisk to indicate changed contents
+                            parent_dir = os.path.dirname(parent_dir)
+            except Exception:
+                pass
+
         for entry in DWalker.entries(fs_entry_params, walker):
             # get formatted output
             formatted_output = ''
@@ -82,7 +102,29 @@ class DHandler:
 
                         total_size += dsize
 
-                print('{0}{1}{2}'.format(entry.indent, size, formatted_output))
+                git_indicator = ''
+                if getattr(fs_entry_params, 'git', False):
+                    status = git_statuses.get(entry.realpath)
+                    if status:
+                        git_indicator = f' [{status}]'
+
+                if getattr(fs_entry_params, 'color', 1):
+                    if entry.type == FSEntryType.DIR:
+                        formatted_output = f'\033[1;34m{formatted_output}\033[0m'
+                    elif entry.type == FSEntryType.FILE:
+                        ext = os.path.splitext(entry.basename)[1].lower()
+                        if ext in ('.png', '.jpg', '.jpeg', '.gif', '.mp4', '.mkv', '.avi', '.mp3', '.wav'):
+                            formatted_output = f'\033[35m{formatted_output}\033[0m'
+                        elif ext in ('.pdf', '.doc', '.docx', '.xls', '.xlsx'):
+                            formatted_output = f'\033[32m{formatted_output}\033[0m'
+                        elif ext in ('.zip', '.tar', '.gz', '.7z'):
+                            formatted_output = f'\033[31m{formatted_output}\033[0m'
+                        elif ext in ('.txt', '.md', '.conf', '.ini', '.json', '.yaml', '.yml', '.csv', '.log', '.toml'):
+                            formatted_output = f'\033[33m{formatted_output}\033[0m' # yellow
+                        elif ext in ('.py', '.js', '.ts', '.html', '.css', '.c', '.cpp', '.go', '.rs', '.java', '.sh'):
+                            formatted_output = f'\033[36m{formatted_output}\033[0m' # cyan
+
+                print('{0}{1}{2}{3}'.format(entry.indent, size, formatted_output, git_indicator))
 
         # print summary
         print('{0} {1}{2}, {3} folder{4}'.format(fcnt,

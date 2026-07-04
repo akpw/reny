@@ -142,6 +142,9 @@ class FSEntryParamsBase():
     file_type = FSEntryFileTypeDescriptor()
     media_scan = BooleanPropertyDescriptor()
 
+    git = BooleanPropertyDescriptor()
+    color = PropertyDescriptor()
+
     fs_entry_builder = LazyClassPropertyDescriptor('reny.fstools.builders.fsb.FSEntryBuilderBase')
     '''Runtime attrbutes
     '''
@@ -162,6 +165,8 @@ class FSEntryParamsBase():
         self.filter_files = not args.get('all_files', False)   
         self.show_size = args.get('show_size', False)
         self.fast_scan = not args.get('media_scan', False)
+        self.git = args.get('git', False)
+        self.color = args.get('color', 1)
 
         #self._media_extensions_cache = set()
 

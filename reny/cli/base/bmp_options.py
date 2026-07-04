@@ -324,6 +324,12 @@ class BatchMPArgParser:
         misc_group.add_argument("-q", "--quiet", dest = 'quiet',
                     help = "Disable visualising changes & displaying info messages during processing",
                     action = 'store_true')
+        misc_group.add_argument("-c", "--color", dest="color", 
+                    help="Color output (0 or 1, default 1)", 
+                    type=int, choices=[0, 1], default=1)
+        misc_group.add_argument("-g", "--git", dest="git", 
+                    help="Show git status", 
+                    action="store_true")
 
     @staticmethod
     def _add_version(parser):
@@ -348,7 +354,7 @@ class BatchMPArgParser:
         init_parser = parser.add_parser(BatchMPBaseCommands.IGNORE,
                                 description = 'Generates a default .renyignore template file',
                                         formatter_class=BatchMPHelpFormatter)
-        init_parser.add_argument('-g', '--global', dest='global_ignore',
+        init_parser.add_argument('-gl', '--global', dest='global_ignore',
                                  action='store_true',
                                  help='Generate the template globally (~/.renyignore)')
 

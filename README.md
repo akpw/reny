@@ -21,6 +21,8 @@ pipx install reny
 - **Padding:** Automatically pad existing numbers in filenames with leading zeros to fix sorting orders
 - **Flattening:** Safely collapse nested directory structures into a single folder
 - **Regex Replacement:** Powerful batch renaming using standard regular expressions
+- **Git Integration:** Automatically detects and displays file and directory modification statuses using `--git`
+- **Color Outputs:** Rich terminal highlighting for different file types using `--color`, grouping extensions visually
 
 ## Examples
 
@@ -30,6 +32,26 @@ pipx install reny
 reny
 ```
 *(Without arguments, `reny` defaults to the `print` command)*
+
+**Visualize with Git Status & Colors (Dry-Run Preview):**
+To visually inspect changes in a repository, you can enable git status tracking. `reny` will automatically bubble up file modifications to their parent directories so you can spot changes at a glance, even with shallow directory levels.
+
+![Reny Colors and Git Output](docs/git-colors-preview.png)
+
+*(Note: terminal colors are enabled by default but are not shown in the text snippet below)*
+```bash
+reny -el 2 --git
+```
+```text
+~/Desktop/_Dev/reny
+  |- pyproject.toml [M ]
+  |- README.md [M ]
+  |->/reny [* ]
+    |->/cli [* ]
+    |->/fstools [* ]
+  |->/tests
+28 files, 12 folders
+```
 
 **Add a sequential index to all `.txt` files recursively:**
 ```bash
@@ -80,6 +102,8 @@ Virtual view by date:
     |- 02/
       |- image.png
 ```
+
+
 
 ### Ignore Files (.renyignore)
 By default, `reny` will automatically detect a `.renyignore` file in your target directory (falling back to a global `~/.renyignore` if none is found) to cleanly exclude specific directories from processing. 
