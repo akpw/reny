@@ -33,36 +33,23 @@ reny
 ```
 *(Without arguments, `reny` defaults to the `print` command)*
 
-**Visualize with Git Status & Colors (Dry-Run Preview):**
-To visually inspect changes in a repository, you can enable git status tracking. `reny` will automatically bubble up file modifications to their parent directories so you can spot changes at a glance, even with shallow directory levels.
+**Limit Recursion Depth (`-el`):**
 
-![Reny Colors and Git Output](docs/git-colors-preview.png)
-
-*(Note: terminal colors are enabled by default but are not shown in the text snippet below)*
+Use `-el` (end level) to control exactly how deep `reny` recurses. For example, to add an index only to files inside immediate subdirectories (depth 1), while ignoring deeper nested folders:
 ```bash
-reny -el 2 --git
+reny -r -el 1 index
 ```
-```text
-~/Desktop/_Dev/reny
-  |- pyproject.toml [M ]
-  |- README.md [M ]
-  |->/reny [* ]
-    |->/cli [* ]
-    |->/fstools [* ]
-  |->/tests
-28 files, 12 folders
-```
+**Visualize with Git info (`-git`):**
+To visually inspect changes in a repository, `reny` will automatically bubble up file modifications to their parent directories, even with shallow directory levels.
+
+<img img width="32%" alt="1" alt="reny_base" src="https://github.com/user-attachments/assets/49c51c65-28c9-48c7-8e7e-85b875cb2733" />
+
 
 **Add a sequential index to all `.txt` files recursively:**
 ```bash
 reny -r -in '*.txt' index
 ```
 
-**Limit Recursion Depth (`-el`):**
-Use `-el` (end level) to control exactly how deep `reny` recurses. For example, to add an index only to files inside immediate subdirectories (depth 1), while ignoring deeper nested folders:
-```bash
-reny -r -el 1 index
-```
 
 **Pad existing numbers with leading zeros (e.g., `2 kms.png` becomes `02 kms.png`):**
 ```bash
