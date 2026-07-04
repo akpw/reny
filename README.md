@@ -39,10 +39,10 @@ Use `-el` (end level) to control exactly how deep `reny` recurses. For example, 
 ```bash
 reny -r -el 1 index
 ```
-**Visualize with Git info (`-git`):**
+**Visualize with Git info (`--git`):**
 To visually inspect changes in a repository, `reny` will automatically bubble up file modifications to their parent directories, even with shallow directory levels.
 
-<img img width="32%" alt="1" alt="reny_base" src="https://github.com/user-attachments/assets/49c51c65-28c9-48c7-8e7e-85b875cb2733" />
+<img width="32%" alt="reny_base" src="https://github.com/user-attachments/assets/49c51c65-28c9-48c7-8e7e-85b875cb2733" />
 
 
 **Add a sequential index to all `.txt` files recursively:**
