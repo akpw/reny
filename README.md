@@ -78,7 +78,7 @@ reny organize -b type
 **Virtual Views (Dry-Run Preview):**
 Preview how files would look if organized by year and month, *without actually moving any files on your drive*:
 ```bash
-reny print -b date --date-format "%Y/%m"
+reny --color 0 print -b date --date-format "%Y/%m"
 ```
 ```text
 Virtual view by date:
@@ -89,14 +89,13 @@ Virtual view by date:
     |- 02/
       |- image.png
 ```
-
+<sup>💡</sup>  The `--color 0` parameter is used to disable terminal colors
 
 
 ### Ignore Files (.renyignore)
 By default, `reny` will automatically detect a `.renyignore` file in your target directory (falling back to a global `~/.renyignore` if none is found) to cleanly exclude specific directories from processing. 
 
 You can also explicitly pass any file, like a standard `.gitignore`, to automatically parse and exclude those paths from the output. 
-<sup>💡</sup>  The `--color 0` parameter is used to disable terminal colors
 ```bash
 reny -r -el 2 -ig .gitignore --color 0
 ```
