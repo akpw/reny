@@ -110,7 +110,7 @@ Virtual view by type:
     |- screenshot.png (1.2 MB)
 5 files, 3 folders
 ```
-To actually commit this organization and move the files, simply use the `organize` command:
+To actually commit this organization and move the files, simply use the `organize` command. As always, `reny` will show a preview and ask for confirmation before actually making any changes:
 ```bash
 reny organize -b type
 ```
