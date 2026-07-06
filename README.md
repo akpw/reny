@@ -16,17 +16,17 @@ pipx install reny
 ```
 
 ## Features
-- **Filesystem Visualization:** Clean, customizable views of files and folders
-- **Recursion & Leveling:** Precise recursion control with `end_level` / `start_level` parameters
-- **Filtering:** Pinpoint targeting using include/exclude patterns and `.renyignore` integration
-- **Color Outputs:** Rich terminal highlighting for different file types, grouping extensions visually
-- **Virtual Views:** Preview how a directory structure would look when reorganised by type, size, or date without moving or changing anything
-- **Git Integration:** Automatically detects and displays file and directory modification statuses using `--git`
-- **Dry-Run by Default:** `reny` always visualizes targeted changes and ask for confirmation before it actually touching files / folders
-- **Indexing:** Multi-level indexing across nested directories, supporting multiple indexing schemes
-- **Padding:** Automatically pad existing numbers in filenames with leading zeros to fix sorting orders
-- **Flattening:** Safely collapse nested directory structures into a single folder
-- **Regex Replacement:** Powerful batch renaming using standard regular expressions
+- *Filesystem Visualization*: Clean, customizable views of files and folders
+- *Recursion & Leveling*: Precise recursion control with `end_level` / `start_level` parameters
+- *Filtering*: Pinpoint targeting using include/exclude patterns and `.renyignore` integration
+- *Color Outputs*: Rich terminal highlighting for different file types, grouping extensions visually
+- *Virtual Views*: Preview how a directory structure would look when reorganised by type, size, or date without moving or changing anything
+- *Git Integration*: Automatically detects and displays file and directory modification statuses using `--git`
+- *Dry-Run by Default*: `reny` always visualizes targeted changes and ask for confirmation before it actually touching files / folders
+- *Indexing*: Multi-level indexing across nested directories, supporting multiple indexing schemes
+- *Padding*: Automatically pad existing numbers in filenames with leading zeros to fix sorting orders
+- *Flattening*: Safely collapse nested directory structures into a single folder
+- *Regex Replacement*: Powerful batch renaming using standard regular expressions
 
 ## Usage & Examples
 
@@ -69,9 +69,7 @@ reny -el 1
 ```
 
 ### 3. Filtering & Ignore Files (`-in`, `-ex`, `-ig`)
-By default, `reny` automatically excludes hidden files and directories (like `.git` and `.venv`). It will also automatically detect and apply any `.renyignore` files found in your target directory (or globally in `~/.renyignore`) to cleanly exclude specific paths.
-
-If you are working inside a repository, you can explicitly pass a custom ignore file, like your standard `.gitignore`, to automatically parse and exclude those paths from the output:
+By default, `reny` automatically excludes hidden files and directories (like `.git` and `.venv`). It will also automatically detect and apply any `.renyignore` files found in target directory (or globally in `~/.renyignore`) to cleanly exclude specific paths. It also supports custom ignore files, like a standard `.gitignore`:
 ```bash
 reny -ig .gitignore
 ```
