@@ -104,13 +104,17 @@ class BatchMPArgParser:
                     help = "File to process")
 
         recursive_mode_group = parser.add_argument_group('Recursion mode')
-        recursive_mode_group.add_argument("-r", "--recursive", dest = "recursive",
-                    help = "Recurse into nested folders",
-                    action = 'store_true')
+        recursive_mode_group.add_argument('-r', '--recursive', dest = 'recursive',
+                help = 'Recursive mode (optional if -el is specified)',
+                action = 'store_true')
+        recursive_mode_group.add_argument('-sl', '--start-level', dest = 'start_level',
+                help = 'Initial nested level for printing (0, i.e. root source directory by default)',
+                type = int,
+                default = 0)
         recursive_mode_group.add_argument("-el", "--end-level", dest = "end_level",
-                    help = "End level for recursion into nested folders",
-                    type = int,
-                    default = 0)
+                help = "Target level for recursive descent (makes -r optional, automatically adjusts to match -sl if smaller)",
+                type = int,
+                default = 0)
 
         include_mode_group = parser.add_argument_group('Filter files or folders')
         include_mode_group.add_argument("-in", "--include", dest = "include",
@@ -138,9 +142,19 @@ class BatchMPArgParser:
                     type = str,
                     choices = ['image', 'video', 'audio', 'media', 'nonmedia', 'playable', 'nonplayable', 'any'],
                     default =  FSEntryDefaults.DEFAULT_FILE_TYPE)
-        media_types_group.add_argument("-ms", "--media-scan", dest = "media_scan",
-                    help = "Scan for media types, instead of using file extensions (can take a long time)",
-                    action = 'store_true')
+
+        view_org_group = parser.add_argument_group('Virtual Views & Organization')
+        view_org_group.add_argument('-ss', '--show-size', dest = 'show_size',
+                help ='Show files size',
+                action = 'store_true')
+        view_org_group.add_argument('-b', '--by', dest = 'by',
+                help = 'Organization strategy or virtual view by type or date',
+                type = str,
+                choices = ['type', 'date'])
+        view_org_group.add_argument('-df', '--date-format', dest = 'date_format',
+                help = 'Date format for subdirectories when using -b date (e.g., %%Y/%%m)',
+                type = str,
+                default = '%Y-%m-%d')
 
 
         # Add Default Miscellaneous Group
@@ -215,8 +229,7 @@ class BatchMPArgParser:
             args['end_level'] = sys.maxsize
 
 
-        if args['media_scan']:
-            pass
+        # (media_scan check removed)
 
         if args['sub_cmd'] == BatchMPBaseCommands.PRINT:
             if args['start_level'] != 0:

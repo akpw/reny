@@ -1,177 +1,161 @@
 # Reny
-A lightweight, fast, and safe batch renaming and filesystem organization tool.
+A lightweight but powerful filesystem visualizer, batch renamer and organization CLI tool.
 
 ## Background
-`reny` was originally created as the `renamer` component inside the larger [`batchmp`](https://github.com/akpw/batch-mp-tools) (Batch Media Processing) suite. It was spun off into its own standalone package to provide for a lightweight, safe, pure-filesystem organizing tool without FFmpeg / Mutagen media dependencies. 
-
-If you need advanced media operations (like denoising, cover-art extraction, or format transcoding), check out the original [`batchmp`](https://github.com/akpw/batch-mp-tools) project. If you just need to safely organize your files with surgical precision, `reny` is all you need.
+`reny` was originally created as the `renamer` component inside the larger [`batchmp`](https://github.com/akpw/batch-mp-tools) suite. It was spun off to provide a pure-filesystem organizing tool without media dependencies. If you want a modern alternative to `ls` or `eza` that doesn't just visualize your file trees, but actually lets you re-organize and modify them with surgical precision, `reny` is all you need.
 
 ## Installation
-You can safely install `reny` from the [PyPI package](https://pypi.org/project/reny) using [pipx](https://pypa.github.io/pipx/):
+You can install `reny` directly from the [PyPI package](https://pypi.org/project/reny) using standard `pip`:
+```bash
+pip install reny
+```
+
+Alternatively, for a cleaner global installation that isolates dependencies, use [pipx](https://pypa.github.io/pipx/):
 ```bash
 pipx install reny
 ```
-*(Note: If this is your first time using `pipx`, you may need to run `pipx ensurepath` once to ensure the installed tools are available in your terminal).*
 
 ## Features
-- **Dry-Run by Default:** `reny` will always visualize targeted changes and ask for confirmation before it ever touches your files 
+- **Filesystem Visualization:** Clean, customizable views of files and folders
+- **Recursion & Leveling:** Precise recursion control with `end_level` / `start_level` parameters
+- **Filtering:** Pinpoint targeting using include/exclude patterns and `.renyignore` integration
+- **Color Outputs:** Rich terminal highlighting for different file types, grouping extensions visually
 - **Virtual Views:** Preview how a directory structure would look when reorganised by type, size, or date without moving or changing anything
-- **Filtering & Leveling:** Precise targeting using include/exclude patterns and recursion control with `end_level` / `start_level` parameters
+- **Git Integration:** Automatically detects and displays file and directory modification statuses using `--git`
+- **Dry-Run by Default:** `reny` always visualizes targeted changes and ask for confirmation before it actually touching files / folders
 - **Indexing:** Multi-level indexing across nested directories, supporting multiple indexing schemes
 - **Padding:** Automatically pad existing numbers in filenames with leading zeros to fix sorting orders
 - **Flattening:** Safely collapse nested directory structures into a single folder
 - **Regex Replacement:** Powerful batch renaming using standard regular expressions
-- **Git Integration:** Automatically detects and displays file and directory modification statuses using `--git`
-- **Color Outputs:** Rich terminal highlighting for different file types using `--color`, grouping extensions visually
 
-## Examples
+## Usage & Examples
 
-### Basic Operations
-**Print current directory structure:**
+### 1. Basic Visualization
+Print the current directory structure:
 ```bash
 reny
 ```
-*(Without arguments, `reny` defaults to the `print` command)*
-
-**Limit Recursion Depth (`-el`):**
-
-Use `-el` (end level) to control exactly how deep `reny` recurses. For example, to add an index only to files inside immediate subdirectories (depth 1), while ignoring deeper nested folders:
-```bash
-reny -r -el 1 index
-```
-**Visualize with Git info (`--git`):**
-
-To visually inspect changes in a repository, `reny` will automatically bubble up file modifications to their parent directories, even with shallow directory levels.
-
-<img width="32%" alt="reny_base" src="https://github.com/user-attachments/assets/49c51c65-28c9-48c7-8e7e-85b875cb2733" />
-
-
-**Add a sequential index to all `.txt` files recursively:**
-```bash
-reny -r -in '*.txt' index
+```text
+/../_Dev/reny
+  |- LICENSE
+  |- pyproject.toml
+  |- README.md
+  |- setup.py
+  |-/reny
+  |-/tests
+4 files, 2 folders
 ```
 
-
-**Pad existing numbers with leading zeros (e.g., `2 kms.png` becomes `02 kms.png`):**
+### 2. Recursion Control (`-r`, `-sl`, `-el`)
+Limit how deep `reny` prints or operates. For example, to view only directories exactly 1 levels deep:
 ```bash
-reny pad -md 2
-```
-
-**Regex Replace:**
-Change spaces to underscores in all filenames:
-```bash
-reny replace -fs ' ' -rs '_'
-```
-
-### Advanced Operations & Virtual Views
-**Flattening nested directories:**
-Collapse all sub-directories and bring their files up to the current folder level:
-```bash
-reny flatten
-```
-
-**Organize by File Type:**
-Move files into sub-directories grouped by their file extension (e.g., `png/`, `pdf/`):
-```bash
-reny organize -b type
-```
-
-**Virtual Views (Dry-Run Preview):**
-Preview how files would look if organized by year and month, *without actually moving any files on your drive*:
-```bash
-reny --color 0 print -b date --date-format "%Y/%m"
+reny -el 1
 ```
 ```text
-Virtual view by date:
-~/Downloads
-  |- 2025/
-    |- 01/
-      |- document.pdf
-    |- 02/
-      |- image.png
-```
-<sup>💡</sup>  The `--color 0` parameter is used to disable terminal colors
-
-
-### Ignore Files (.renyignore)
-By default, `reny` will automatically detect a `.renyignore` file in your target directory (falling back to a global `~/.renyignore` if none is found) to cleanly exclude specific directories from processing. 
-
-You can also explicitly pass any file, like a standard `.gitignore`, to automatically parse and exclude those paths from the output. 
-```bash
-reny -r -el 2 -ig .gitignore --color 0
-```
-```text
-~/Desktop/_Dev/reny
+/../_Dev/reny
   |- LICENSE
   |- pyproject.toml
   |- README.md
   |- setup.py
   |->/reny
-    |- __init__.py
-    |->/cli
-      |- __init__.py
-      |-/base
-      |-/renamer
-    |->/commons
-      |- __init__.py
-      |- chainedhandler.py
-      |- descriptors.py
-      |- progressbar.py
-      |- taskprocessor.py
-      |- utils.py
-    |->/fstools
-      |- __init__.py
-      |- dirtools.py
-      |- fsutils.py
-      |- rename.py
-      |- virtual_organizer.py
-      |- walker.py
-      |-/builders
+    |-/cli
+    |-/commons
+    |-/fstools
   |->/tests
-    |- __init__.py
-    |->/base
-      |- __init__.py
-      |- test_base.py
-    |->/commons
-      |- __init__.py
-      |- test_commons.py
-      |- test_ignore.py
-    |->/fs
-      |- __init__.py
-      |- test_fs_base.py
-      |- test_fs_organize.py
-      |- test_fsutils.py
-      |-/data
-28 files, 12 folders
+    |-/base
+    |-/commons
+    |-/fs
+4 files, 8 folders
 ```
 
-### Real-World Scenario: Downloads Cleanup
-A safe, two-step workflow to tame a chaotic downloads folder by grouping files by their extension and sorting them by size to see what's eating up your disk space.
+### 3. Filtering & Ignore Files (`-in`, `-ex`, `-ig`)
+By default, `reny` automatically excludes hidden files and directories (like `.git` and `.venv`). It will also automatically detect and apply any `.renyignore` files found in your target directory (or globally in `~/.renyignore`) to cleanly exclude specific paths.
 
-**Step 1: Preview the cleanup with size statistics**
-*(Shows you the largest file categories first, without moving any files)*
+If you are working inside a repository, you can explicitly pass a custom ignore file, like your standard `.gitignore`, to automatically parse and exclude those paths from the output:
 ```bash
-reny -s sd print -b type -ss
+reny -ig .gitignore
 ```
+```text
+~/Projects/app
+  |- main.py
+  |->/src
+    |- utils.py
+    |- database.py
+3 files, 1 folder
+```
+*(Notice that `__pycache__` and `.venv` are cleanly omitted).*
 
-**Step 2: Commit the organization**
-*(Actually moves the files into their respective subdirectories)*
+### 4. Virtual Views & Organization (`-b`, `-ss`, `-s`)
+Preview how a chaotic downloads folder would look if organized by file type, sorted by size descending, without actually moving anything:
+```bash
+reny -b type -s sd -ss
+```
+```text
+Virtual view by type:
+~/Downloads
+  |->/video
+    |- vacation_movie.mp4 (1.2 GB)
+    |- screen_recording.mov (450 MB)
+  |->/document
+    |- tax_return.pdf (2.1 MB)
+    |- receipt.pdf (450 KB)
+  |->/image
+    |- screenshot.png (1.2 MB)
+5 files, 3 folders
+```
+To actually commit this organization and move the files, simply use the `organize` command:
 ```bash
 reny organize -b type
 ```
 
-## Documentation & Tutorials
-Although `reny` is a standalone project, its core organizing logic is inherited directly from [`batchmp`](https://github.com/akpw/batch-mp-tools). You can find detailed tutorials and deep-dives on how to master its capabilities in the original blog posts:
-- [Renamer Organize & Virtual Views](https://akpw.github.io/articles/2025/09/22/Print-and-Organize.html) – *Highly recommended reading for mastering virtual directory views*
-- [BatchMP Tools Tutorial, Part II: renaming files with renamer](https://akpw.github.io/articles/2015/04/11/batchmp-tutorial-part-ii.html)
-- [Practical BatchMP Series](https://akpw.github.io//tags.html#BatchMP+Tools)
+### 5. Git Integration (`--git`)
+Visually inspect changes in a repository. `reny` automatically bubbles up file modifications to their parent directories.
+```bash
+reny --git
+```
+```text
+~/Projects/repo
+  |-[* ] main.py
+  |->[* ]/src
+    |-[* ] utils.py
+    |- database.py
+```
 
-## Usage
-Run `reny --help` to see all available filesystem operations!
+### 6. Advanced Batch Renaming (Commands)
+When you are ready to modify your files, `reny` operates purely as a dry-run by default. It safely visualizes all targeted changes and asks for confirmation before any files are moved or renamed.
+
+`reny` supports a variety of targeted commands for bulk renaming:
+
+**Regex Replace (`replace`)**
+Change spaces to underscores in all filenames:
+```bash
+reny replace -fs ' ' -rs '_'
+```
+
+**Sequential Indexing (`index`)**
+Add a sequential index to all `.txt` files recursively:
+```bash
+reny -r -in '*.txt' index
+```
+
+**Zero-Padding (`pad`)**
+Pad existing numbers with leading zeros (e.g., `2.png` becomes `02.png`):
+```bash
+reny pad -md 2
+```
+
+**Flattening (`flatten`)**
+Safely collapse nested directory structures into a single folder:
+```bash
+reny flatten
+```
+
+## Documentation
+Although `reny` is standalone, its core logic inherits from `batchmp`. You can find detailed tutorials in the original blog posts:
+- [Renamer Organize & Virtual Views](https://akpw.github.io/articles/2025/09/22/Print-and-Organize.html)
+- [BatchMP Tools Tutorial](https://akpw.github.io/articles/2015/04/11/batchmp-tutorial-part-ii.html)
 
 ## Development
-To set up the project for development:
-
 1. Clone the repository and navigate into it:
    ```bash
    git clone https://github.com/akpw/reny.git
@@ -188,14 +172,7 @@ To set up the project for development:
    ```
 
 ## Running Tests
-The project uses `pytest` for its test suite. Because `reny` performs real filesystem operations, the tests are designed to dynamically create and clean up safe temporary sandbox folders during execution.
-
-To run the full test suite:
+To run the full test suite (which dynamically creates and cleans up temporary sandboxes):
 ```bash
 pytest -v --tb=short tests/
-```
-
-To run a specific test file:
-```bash
-pytest tests/fs/test_fs_organize.py
 ```

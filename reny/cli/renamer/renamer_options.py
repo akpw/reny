@@ -81,7 +81,6 @@ class RenamerCommands(BatchMPBaseCommands):
     @classmethod
     def commands_meta(cls):
         return ''.join(('{',
-                        '{}, '.format(cls.PRINT),
                         '{}, '.format(cls.INDEX),
                         '{}, '.format(cls.ADD_DATE),
                         '{}, '.format(cls.ADD_TEXT),
@@ -106,12 +105,11 @@ class RenameArgParser(BatchMPArgParser):
         self._script_name = 'Reny'
 
         self._description = '''
-        Reny is a lightweight, powerful batch renaming and filesystem organizing CLI tool.
-        In addition to common rename operations such as regexp-based replace, padding
-        numbers, and adding text/dates, it also supports multi-level indexing across
-        nested directories, flattening folders, and generating virtual views. As default
-        behavior, Reny visualizes targeted changes and asks for confirmation before
-        actually changing anything on your filesystem.
+        Reny is a lightweight but powerful filesystem visualizer, batch renamer and organization CLI tool.
+        It visualizes complex directory structures and generates virtual views, alongside 
+        handling standard renaming tasks (regex replace, padding, appending text/dates) and advanced 
+        operations like multi-level indexing and folder flattening. By default, Reny safely visualizes 
+        all targeted changes and requires confirmation before modifying the filesystem.
         '''
     # Args Parsing
     def parse_commands(self, parser):
@@ -134,33 +132,15 @@ class RenameArgParser(BatchMPArgParser):
                 help = "Exclude files from processing",
                 action = 'store_true')
 
-        # Print
+        # Print (hidden)
         print_parser = subparsers.add_parser(RenamerCommands.PRINT,
-                                                description = 'Print source directory',
+                                                description = 'Print source directory (default command, optional)',
                                                 formatter_class = BatchMPHelpFormatter)
-        print_parser.add_argument('-sl', '--start-level', dest = 'start_level',
-                help = 'Initial nested level for printing (0, i.e. root source directory by default)',
-                type = int,
-                default = 0)
-        print_parser.add_argument('-ss', '--show-size', dest = 'show_size',
-                help ='Show files size',
-                action = 'store_true')
-        print_parser.add_argument('-b', '--by', dest = 'by',
-                help = 'Show organized virtual view by type or date',
-                type = str,
-                choices = ['type', 'date'])
-        print_parser.add_argument('-df', '--date-format', dest = 'date_format',
-                help = 'Date format for subdirectories when using -b date (e.g., %%Y/%%m)',
-                type = str,
-                default = '%Y-%m-%d')
 
         # Stats
         stats_parser = subparsers.add_parser(RenamerCommands.STATS,
                                                 description = 'Prints directory stats',
                                                 formatter_class = BatchMPHelpFormatter)
-        stats_parser.add_argument('-ss', '--show-size', dest = 'show_size',
-                help ='Show files size',
-                action = 'store_true')
 
 
         # Flatten
@@ -172,7 +152,7 @@ class RenameArgParser(BatchMPArgParser):
                 help = 'Target level below which all folders will be flattened',
                 type = int,
                 required = True)
-        flatten_parser.add_argument('-df', '--discard-flattened', dest = 'discard_flattened',
+        flatten_parser.add_argument('-dfl', '--discard-flattened', dest = 'discard_flattened',
                 help = "What to do with flattened directories: \
                               'de' (default) will remove flattened directories if they are empty \
                               'le' will leave flattened directories (empty or not) \
@@ -325,15 +305,6 @@ class RenameArgParser(BatchMPArgParser):
         organize_parser = subparsers.add_parser(RenamerCommands.ORGANIZE,
                                             description='Organize selected files into directories by specified attributes',
                                             formatter_class=BatchMPHelpFormatter)
-        organize_parser.add_argument('-b', '--by', dest='by',
-                                     help='Organization strategy: by type or by date',
-                                     type=str,
-                                     choices=['type', 'date'],
-                                     required=True)
-        organize_parser.add_argument('-df', '--date-format', dest='date_format',
-                                     help='Date format for subdirectories (e.g., %%Y/%%m)',
-                                     type=str,
-                                     default='%Y-%m-%d')
         organize_parser.add_argument('-td', '--target-dir', dest='target_dir',
                                      help='Target directory to organize files into',
                                      type=str)
@@ -345,8 +316,6 @@ class RenameArgParser(BatchMPArgParser):
     # Args Checking
     def default_command(self, args, parser):
         args['sub_cmd'] = RenamerCommands.PRINT
-        args['start_level'] = 0
-        args['show_size'] = False
 
     def check_args(self, args, parser):
         ''' Validation of supplied Renamer CLI arguments
@@ -360,6 +329,10 @@ class RenameArgParser(BatchMPArgParser):
                 #print ('Target Level should be greater than or equal to the End Level Global Option\n'
                 #           '... Adjusting End Level to: {}'.format(args['target_level']))
                 args['end_level'] = args['target_level']
+
+        if args['sub_cmd'] == RenamerCommands.ORGANIZE:
+            if not args.get('by'):
+                parser.error('argument -b/--by is required for the organize command')
 
 
 

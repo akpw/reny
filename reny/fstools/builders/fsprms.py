@@ -13,6 +13,7 @@
 
 
 import os, sys, fnmatch, collections, pygtrie, heapq
+import mimetypes
 from enum import IntEnum
 from abc import ABCMeta, abstractmethod
 from reny.fstools.fsutils import FSH
@@ -140,7 +141,7 @@ class FSEntryParamsBase():
     nested_indent = PropertyDescriptor()
     sort = PropertyDescriptor()
     file_type = FSEntryFileTypeDescriptor()
-    media_scan = BooleanPropertyDescriptor()
+    # media_scan removed
 
     git = BooleanPropertyDescriptor()
     color = PropertyDescriptor()
@@ -164,7 +165,7 @@ class FSEntryParamsBase():
         self.filter_dirs = not args.get('all_dirs', False)
         self.filter_files = not args.get('all_files', False)   
         self.show_size = args.get('show_size', False)
-        self.fast_scan = not args.get('media_scan', False)
+        # fast_scan removed
         self.git = args.get('git', False)
         self.color = args.get('color', 1)
 
@@ -175,6 +176,9 @@ class FSEntryParamsBase():
         self._enclosing_files_containters = set()
         if self.scan_for_enclosing_directories:
             for rpath, dirs, files in os.walk(self.src_dir):
+                # Prune ignored directories so we don't scan them
+                dirs[:] = [d for d in dirs if not self.exclude_match(d)]
+                
                 if FSH.level_from_root(self.src_dir, rpath) < self.end_level:
                     marked_enclosing = False
                     for dir_name in dirs:
@@ -208,20 +212,26 @@ class FSEntryParamsBase():
 
     # Filtering
     @property
-    def passed_filters(self):        
-        def include_match(fsname):
+    def include_match(self):
+        def match(fsname):
             for include_pattern in self.include.split(';'):
                 if fnmatch.fnmatch(fsname, include_pattern):
                     return True
             return False
+        return match
 
-        def exclude_match(fsname):
+    @property
+    def exclude_match(self):
+        def match(fsname):
             for exclude_pattern in self.exclude.split(';'):
                 if fnmatch.fnmatch(fsname, exclude_pattern):
                     return True
             return False
+        return match
 
-        return lambda fs_name: include_match(fs_name) and (not exclude_match(fs_name))
+    @property
+    def passed_filters(self):
+        return lambda fs_name: self.include_match(fs_name) and (not self.exclude_match(fs_name))
 
     def is_of_entry_type(self, media_type):
         return {
@@ -237,7 +247,30 @@ class FSEntryParamsBase():
 
 
     def is_of_required_type(self, fpath):
-        media_type = None
+        if self.file_type == FSMediaEntryGroupType.ANY:
+            return True
+            
+        mime_type, _ = mimetypes.guess_type(fpath)
+        media_type = FSMediaEntryType.NONMEDIA
+        
+        if mime_type:
+            if mime_type.startswith('image/'):
+                media_type = FSMediaEntryType.IMAGE
+            elif mime_type.startswith('video/'):
+                media_type = FSMediaEntryType.VIDEO
+            elif mime_type.startswith('audio/'):
+                media_type = FSMediaEntryType.AUDIO
+                
+        # Handle common extensions that mimetypes might miss on some systems
+        if media_type == FSMediaEntryType.NONMEDIA:
+            ext = os.path.splitext(fpath)[1].lower()
+            if ext in ('.mkv', '.webm', '.avi', '.mp4'):
+                media_type = FSMediaEntryType.VIDEO
+            elif ext in ('.webp', '.png', '.jpg', '.jpeg', '.gif'):
+                media_type = FSMediaEntryType.IMAGE
+            elif ext in ('.flac', '.m4a', '.mp3', '.wav'):
+                media_type = FSMediaEntryType.AUDIO
+
         return self.is_of_entry_type(media_type)
 
     @property

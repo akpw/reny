@@ -6,8 +6,8 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md'), encoding='utf-8'
 
 setup(
     name="reny",
-    version="1.0.7",
-    description="A lightweight, powerful batch renaming and filesystem organizing CLI tool.",
+    version="1.0.8",
+    description="A lightweight but powerful filesystem visualizer, batch renamer and organization CLI tool.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     packages=find_packages(),
@@ -24,7 +24,7 @@ setup(
     url='https://github.com/akpw/reny',
     author='Arseniy Kuznetsov',
     license='GNU General Public License v2 (GPLv2)',
-    keywords='Batch Rename Organizer File System Management',
+    keywords='Batch Rename Organizer Filesystem Visualizer',
     python_requires='>=3.9',
     classifiers=[
         'Development Status :: 4 - Beta',
