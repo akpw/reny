@@ -145,6 +145,7 @@ When you are ready to modify your files, `reny` operates purely as a dry-run by 
 `reny` supports a variety of targeted commands for bulk renaming:
 
 **Indexing (`index`, `-sq`/`--sequential`, `-bd`/`--by-directory`)**
+
 Add an index to all `.txt` files recursively. By default, `reny` performs multi-level indexing (restarting the count inside each respective directory):
 ```bash
 reny -r -in '*.txt' index
@@ -155,18 +156,21 @@ reny -r -in '*.txt' index -sq
 ```
 
 **Zero-Padding (`pad`, `-md`/`--min-digits`)**
+
 Pad existing numbers with leading zeros (e.g., `2.png` becomes `02.png`):
 ```bash
 reny pad -md 2
 ```
 
 **Flattening (`flatten`, `-tl`/`--target-level`)**
+
 Safely collapse nested directory structures into a single folder (target level 1):
 ```bash
 reny flatten -tl 1
 ```
 
 **Regex Replace (`replace`, `-fs`/`--find-string`, `-rs`/`--replace-string`)**
+
 Change spaces to underscores in all filenames:
 ```bash
 reny replace -fs ' ' -rs '_'
