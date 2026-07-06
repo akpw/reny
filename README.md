@@ -2,15 +2,15 @@
 A lightweight but powerful filesystem visualizer, batch renamer and organization CLI tool.
 
 ## Background
-`reny` was originally created as the `renamer` component inside the larger [`batchmp`](https://github.com/akpw/batch-mp-tools) suite. It was spun off to provide a pure-filesystem organizing tool without media dependencies. If you want a modern alternative to `ls` or `eza` that doesn't just visualize your file trees, but actually lets you re-organize and modify them with surgical precision, `reny` is all you need.
+`reny` was originally created as the `renamer` component inside the larger [`batchmp`](https://github.com/akpw/batch-mp-tools) suite. It was spun off to provide a pure-filesystem organizing tool without media dependencies. Apart from customazible visualization of trees, it can also re-organize and modify them with surgical precision.
 
 ## Installation
-You can install `reny` directly from the [PyPI package](https://pypi.org/project/reny) using standard `pip`:
+From the [PyPI package](https://pypi.org/project/reny) using standard `pip`:
 ```bash
 pip install reny
 ```
 
-Alternatively, for a cleaner global installation that isolates dependencies, use [pipx](https://pypa.github.io/pipx/):
+For a cleaner installation with isolated dependencies, use [pipx](https://pypa.github.io/pipx/):
 ```bash
 pipx install reny
 ```
@@ -47,7 +47,7 @@ reny
 ```
 
 ### 2. Recursion Control (`-r`, `-sl`, `-el`)
-Limit how deep `reny` prints or operates. For example, to view only directories exactly 1 levels deep:
+Easily adjusts how deep `reny` prints or operates. For example, to view only directories exactly 1 levels deep:
 ```bash
 reny -el 1
 ```
@@ -69,7 +69,7 @@ reny -el 1
 ```
 
 ### 3. Filtering & Ignore Files (`-in`, `-ex`, `-ig`)
-By default, `reny` automatically excludes hidden files and directories (like `.git` and `.venv`). It will also automatically detect and apply any `.renyignore` files found in target directory (or globally in `~/.renyignore`) to cleanly exclude specific paths. It also supports custom ignore files, like a standard `.gitignore`:
+By default, `reny` automatically excludes hidden files and directories (like `.git` and `.venv`). Additional filters can be set via `in` / `-ex` parameters, or via `.renyignore` file in target directory or globally in `~/.renyignore`. `reny` also supports custom ignore files, like a standard `.gitignore`:
 ```bash
 reny -ig .gitignore
 ```
