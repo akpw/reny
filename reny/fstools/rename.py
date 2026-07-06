@@ -73,9 +73,8 @@ class Renamer:
                     if by_directory:
                         # indexing via adding respective directory counter
                         fcnt = counters[cnt_key].dirs_cnt - 1
-                        # do nothing for root files
                         if fcnt >= 0:
-                            addition = str(fcnt).zfill(Counters.num_digits(total_files, min_digits))
+                            addition = str(fcnt).zfill(DirCounters.num_digits(total_files, min_digits))
                     else:
                         addition = str(counters[cnt_key].files_cnt).zfill(DirCounters.num_digits(total_files, min_digits))
                         # need to update the files counter

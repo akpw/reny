@@ -144,10 +144,14 @@ When you are ready to modify your files, `reny` operates purely as a dry-run by 
 
 `reny` supports a variety of targeted commands for bulk renaming:
 
-**Sequential Indexing (`index`, `-r`/`--recursive`, `-in`/`--include`)**
-Add a sequential index to all `.txt` files recursively:
+**Indexing (`index`, `-sq`/`--sequential`, `-bd`/`--by-directory`)**
+Add an index to all `.txt` files recursively. By default, `reny` performs multi-level indexing (restarting the count inside each respective directory):
 ```bash
 reny -r -in '*.txt' index
+```
+To index files continuously across all nested directories, use the `-sq` flag. Alternatively, use `-bd` to append the directory's index instead of the file's index:
+```bash
+reny -r -in '*.txt' index -sq
 ```
 
 **Zero-Padding (`pad`, `-md`/`--min-digits`)**
