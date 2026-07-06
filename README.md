@@ -47,7 +47,7 @@ reny
 ```
 
 ### 2. Recursion Control (`-r`, `-sl`, `-el`)
-Easily adjusts how deep `reny` prints or operates. For example, to view only directories exactly 1 levels deep:
+Easily adjusts how deep `reny` prints or operates. For example, to view files and directories exactly 1 levels deep:
 ```bash
 reny -el 1
 ```
@@ -71,17 +71,26 @@ reny -el 1
 ### 3. Filtering & Ignore Files (`-in`, `-ex`, `-ig`)
 By default, `reny` automatically excludes hidden files and directories (like `.git` and `.venv`). Additional filters can be set via `in` / `-ex` parameters, or via `.renyignore` file in target directory or globally in `~/.renyignore`. `reny` also supports custom ignore files, like a standard `.gitignore`:
 ```bash
-reny -ig .gitignore
+reny -el 1 -ig .gitignore
 ```
 ```text
-~/Projects/app
-  |- main.py
-  |->/src
-    |- utils.py
-    |- database.py
-3 files, 1 folder
+/../_Dev/reny
+  |- LICENSE
+  |- pyproject.toml
+  |- README.md
+  |- setup.py
+  |->/reny
+    |- __init__.py
+    |-/cli
+    |-/commons
+    |-/fstools
+  |->/tests
+    |- __init__.py
+    |-/base
+    |-/commons
+    |-/fs
+6 files, 8 folders
 ```
-*(Notice that `__pycache__` and `.venv` are cleanly omitted).*
 
 ### 4. Virtual Views & Organization (`-b`, `-ss`, `-s`)
 Preview how a chaotic downloads folder would look if organized by file type, sorted by size descending, without actually moving anything:
@@ -124,12 +133,6 @@ When you are ready to modify your files, `reny` operates purely as a dry-run by 
 
 `reny` supports a variety of targeted commands for bulk renaming:
 
-**Regex Replace (`replace`)**
-Change spaces to underscores in all filenames:
-```bash
-reny replace -fs ' ' -rs '_'
-```
-
 **Sequential Indexing (`index`)**
 Add a sequential index to all `.txt` files recursively:
 ```bash
@@ -146,6 +149,12 @@ reny pad -md 2
 Safely collapse nested directory structures into a single folder:
 ```bash
 reny flatten
+```
+
+**Regex Replace (`replace`)**
+Change spaces to underscores in all filenames:
+```bash
+reny replace -fs ' ' -rs '_'
 ```
 
 ## Documentation
