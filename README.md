@@ -2,7 +2,7 @@
 A lightweight but powerful filesystem visualizer, batch renamer and organization CLI tool.
 
 ## Background
-`reny` was originally created as the `renamer` component inside the larger [`batchmp`](https://github.com/akpw/batch-mp-tools) suite. It was spun off to provide a pure-filesystem organizing tool without media dependencies. Apart from customazible visualization of trees, it can also re-organize and modify them with surgical precision.
+`reny` was originally created as the `renamer` component inside the larger [`batchmp`](https://github.com/akpw/batch-mp-tools) suite. It was spun off to provide a pure-filesystem organizing tool without media dependencies. Apart from customizable visualization of file trees, it can also re-organize and modify them with surgical precision.
 
 ## Installation
 From the [PyPI package](https://pypi.org/project/reny) using standard `pip`:
@@ -22,7 +22,7 @@ pipx install reny
 - *Color Outputs*: Rich terminal highlighting for different file types, grouping extensions visually
 - *Virtual Views*: Preview how a directory structure would look when reorganised by type, size, or date without moving or changing anything
 - *Git Integration*: Automatically detects and displays file and directory modification statuses using `--git`
-- *Dry-Run by Default*: `reny` always visualizes targeted changes and ask for confirmation before it actually touching files / folders
+- *Dry-Run by Default*: `reny` always visualizes targeted changes and asks for confirmation before actually touching files / folders
 - *Indexing*: Multi-level indexing across nested directories, supporting multiple indexing schemes
 - *Padding*: Automatically pad existing numbers in filenames with leading zeros to fix sorting orders
 - *Flattening*: Safely collapse nested directory structures into a single folder
@@ -47,7 +47,7 @@ reny
 ```
 
 ### 2. Recursion Control (`-r`, `-sl`, `-el`)
-Easily adjusts how deep `reny` prints or operates. For example, to view files and directories exactly 1 levels deep:
+Easily adjust how deep `reny` prints or operates. For example, to view files and directories exactly 1 level deep:
 ```bash
 reny -el 1
 ```
@@ -69,15 +69,15 @@ reny -el 1
 ```
 
 ### 3. Filtering & Ignore Files (`-in`, `-ex`, `-ig`)
-By default, `reny` automatically excludes hidden files and directories (like `.git` and `.venv`). Additional filters can be set via `in` / `-ex` parameters, or via `.renyignore` file in target directory or globally in `~/.renyignore`. `reny` also supports custom ignore files, like a standard `.gitignore`:
+By default, `reny` automatically excludes hidden files and directories (like `.git` and `.venv`). Additional filters can be set via `-in` / `-ex` parameters, or via a `.renyignore` file in the target directory or globally in `~/.renyignore`. `reny` also supports custom ignore files, like a standard `.gitignore`:
 ```bash
-reny -el 1 -ig .gitignore
+reny -el 1 -ig .gitignore 
 ```
 ```text
 /../_Dev/reny
   |- LICENSE
   |- pyproject.toml
-  |- README.md
+  |- README.md 
   |- setup.py
   |->/reny
     |- __init__.py
@@ -118,14 +118,25 @@ reny organize -b type
 ### 5. Git Integration (`--git`)
 Visually inspect changes in a repository. `reny` automatically bubbles up file modifications to their parent directories.
 ```bash
-reny --git
+reny -el 1 -ig .gitignore --git
 ```
 ```text
-~/Projects/repo
-  |-[* ] main.py
-  |->[* ]/src
-    |-[* ] utils.py
-    |- database.py
+/../_Dev/reny
+  |- LICENSE
+  |- pyproject.toml
+  |- README.md [ M]
+  |- setup.py
+  |->/reny [* ]
+    |- __init__.py
+    |-/cli [* ]
+    |-/commons
+    |-/fstools
+  |->/tests
+    |- __init__.py
+    |-/base
+    |-/commons
+    |-/fs
+6 files, 8 folders
 ```
 
 ### 6. Advanced Batch Renaming (Commands)
@@ -146,15 +157,23 @@ reny pad -md 2
 ```
 
 **Flattening (`flatten`)**
-Safely collapse nested directory structures into a single folder:
+Safely collapse nested directory structures into a single folder (target level 1):
 ```bash
-reny flatten
+reny flatten -tl 1
 ```
 
 **Regex Replace (`replace`)**
 Change spaces to underscores in all filenames:
 ```bash
 reny replace -fs ' ' -rs '_'
+```
+Manually pad single-digit filenames with a leading zero (an alternative to the `pad` command using capture groups):
+```bash
+reny replace -fs '^(\d)$' -rs '0\1'
+```
+Delete the first 3 characters from every filename:
+```bash
+reny replace -fs '^.{1,3}' -rs ''
 ```
 
 ## Documentation

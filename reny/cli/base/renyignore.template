@@ -1,9 +1,9 @@
 # OS & File System Artifacts
 .DS_Store
+.Trash
 Thumbs.db
 ehthumbs.db
 desktop.ini
-.Trash
 ._*
 
 # Temporary Files
