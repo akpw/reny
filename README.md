@@ -46,7 +46,7 @@ reny
 4 files, 2 folders
 ```
 
-### 2. Recursion Control (`-r`, `-sl`, `-el`)
+### 2. Recursion Control (`-r`/`--recursive`, `-sl`/`--start-level`, `-el`/`--end-level`)
 Easily adjust how deep `reny` prints or operates. For example, to view files and directories exactly 1 level deep:
 ```bash
 reny -el 1
@@ -68,7 +68,7 @@ reny -el 1
 4 files, 8 folders
 ```
 
-### 3. Filtering & Ignore Files (`-in`, `-ex`, `-ig`)
+### 3. Filtering & Ignore Files (`-in`/`--include`, `-ex`/`--exclude`, `-ig`/`--ignore-file`)
 By default, `reny` automatically excludes hidden files and directories (like `.git` and `.venv`). Additional filters can be set via `-in` / `-ex` parameters, or via a `.renyignore` file in the target directory or globally in `~/.renyignore`. `reny` also supports custom ignore files, like a standard `.gitignore`:
 ```bash
 reny -el 1 -ig .gitignore 
@@ -92,7 +92,7 @@ reny -el 1 -ig .gitignore
 6 files, 8 folders
 ```
 
-### 4. Virtual Views & Organization (`-b`, `-ss`, `-s`)
+### 4. Virtual Views & Organization (`-b`/`--by`, `-ss`/`--show-size`, `-s`/`--sort`)
 Preview how a chaotic downloads folder would look if organized by file type, sorted by size descending, without actually moving anything:
 ```bash
 reny -b type -s sd -ss
@@ -144,25 +144,25 @@ When you are ready to modify your files, `reny` operates purely as a dry-run by 
 
 `reny` supports a variety of targeted commands for bulk renaming:
 
-**Sequential Indexing (`index`)**
+**Sequential Indexing (`index`, `-r`/`--recursive`, `-in`/`--include`)**
 Add a sequential index to all `.txt` files recursively:
 ```bash
 reny -r -in '*.txt' index
 ```
 
-**Zero-Padding (`pad`)**
+**Zero-Padding (`pad`, `-md`/`--min-digits`)**
 Pad existing numbers with leading zeros (e.g., `2.png` becomes `02.png`):
 ```bash
 reny pad -md 2
 ```
 
-**Flattening (`flatten`)**
+**Flattening (`flatten`, `-tl`/`--target-level`)**
 Safely collapse nested directory structures into a single folder (target level 1):
 ```bash
 reny flatten -tl 1
 ```
 
-**Regex Replace (`replace`)**
+**Regex Replace (`replace`, `-fs`/`--find-string`, `-rs`/`--replace-string`)**
 Change spaces to underscores in all filenames:
 ```bash
 reny replace -fs ' ' -rs '_'
