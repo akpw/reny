@@ -1,9 +1,9 @@
 # Reny
-A lightweight but powerful filesystem visualizer, batch renamer and organization CLI tool.
+A lightweight but powerful filesystem visualizer, batch renamer and organization CLI tool. Apart from customizable visualization of file trees, it can also re-organize and modify them with surgical precision.
+
 
 ## Background
-`reny` was originally created as the `renamer` component inside the larger [`batchmp`](https://github.com/akpw/batch-mp-tools) suite. It was spun off to provide a pure-filesystem organizing tool without media dependencies. Apart from customizable visualization of file trees, it can also re-organize and modify them with surgical precision.
-
+`reny` was originally created as the `renamer` component inside the larger [`batchmp`](https://github.com/akpw/batch-mp-tools) suite. It was spun off to provide a pure-filesystem organizing tool without media dependencies. 
 ## Installation
 From the [PyPI package](https://pypi.org/project/reny) using standard `pip`:
 ```bash
