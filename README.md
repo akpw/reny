@@ -1,6 +1,10 @@
 # Reny
-A lightweight but powerful filesystem visualizer, batch renamer and organization CLI tool. Apart from customizable visualization of file trees, it can also re-organize and modify them with surgical precision.
-
+Reny is a lightweight but powerful filesystem visualizer, batch renamer and
+organization CLI tool. It visualizes complex directory structures and generates virtual
+views, alongside handling standard renaming tasks (regex replace, padding, appending
+text/dates) and advanced operations like multi-level indexing and folder flattening. By
+default, Reny safely visualizes all targeted changes and requires confirmation before
+modifying the filesystem.
 
 ## Background
 `reny` was originally created as the `renamer` component inside the larger [`batchmp`](https://github.com/akpw/batch-mp-tools) suite. It was spun off to provide a pure-filesystem organizing tool without media dependencies. 
