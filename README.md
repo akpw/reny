@@ -8,13 +8,20 @@ modifying the filesystem.
 
 ## Background
 `reny` was originally created as the `renamer` component inside the larger [`batchmp`](https://github.com/akpw/batch-mp-tools) suite. It was spun off to provide a pure-filesystem organizing tool without media dependencies. 
+
 ## Installation
-From the [PyPI package](https://pypi.org/project/reny) using standard `pip`:
+Homebrew:
+```bash
+brew tap akpw/tap
+brew install reny
+```
+
+Alternatively, install from the [PyPI package](https://pypi.org/project/reny) using standard `pip`:
 ```bash
 pip install reny
 ```
 
-For a cleaner installation with isolated dependencies, use [pipx](https://pypa.github.io/pipx/):
+Or for a clean `pip` installation with isolated dependencies via [pipx](https://pypa.github.io/pipx/):
 ```bash
 pipx install reny
 ```
