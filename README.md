@@ -153,15 +153,23 @@ reny -el 1 -ig .gitignore --git
 ### 6. Configuration File (`config.toml`)
 `reny` supports setting default options via a TOML configuration file located at `~/.config/reny/config.toml` (or a local `./.reny.toml`).
 
-Generate a fully-commented default configuration template:
+Generate a fully-commented default configuration template (or open an existing one in your `$EDITOR`):
 ```bash
-reny config            # Generates ~/.config/reny/config.toml
-reny config --local    # Generates ./.reny.toml in current directory
+reny config            # Generates or opens ~/.config/reny/config.toml
+reny config --local    # Generates or opens ./.reny.toml in current directory
 ```
 
 Any options specified on the command line automatically override settings in the config file.
 
-### 7. Advanced Batch Renaming (Commands)
+### 7. Ignore File Management (`reny ignore`)
+`reny` supports generating and managing ignore template files to exclude unwanted files or directories from operations:
+
+```bash
+reny ignore            # Generates or opens ./.renyignore in current directory
+reny ignore -gl        # Generates or opens ~/.renyignore globally
+```
+
+### 8. Advanced Batch Renaming (Commands)
 When you are ready to modify your files, `reny` operates purely as a dry-run by default. It safely visualizes all targeted changes and asks for confirmation before any files are moved or renamed.
 
 `reny` supports a variety of targeted commands for bulk renaming:
