@@ -1,3 +1,52 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "reny"
+version = "1.0.9"
+description = "A lightweight but powerful filesystem visualizer, batch renamer and organization CLI tool."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "GPL-2.0-or-later" }
+authors = [
+    { name = "Arseniy Kuznetsov" }
+]
+keywords = ["Batch", "Rename", "Organizer", "Filesystem", "Visualizer"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Customer Service",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: BSD :: FreeBSD",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: System",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Utilities"
+]
+dependencies = [
+    "pygtrie"
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-mock"
+]
+
+[project.urls]
+Homepage = "https://github.com/akpw/reny"
+
+[project.scripts]
+reny = "reny.cli.renamer.renamer_dispatch:main"
+
+[tool.setuptools.packages.find]
+include = ["reny*"]
+
+[tool.setuptools.package-data]
+reny = ["cli/base/*.template"]
