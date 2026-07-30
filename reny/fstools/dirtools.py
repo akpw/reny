@@ -56,13 +56,13 @@ class DHandler:
                 for line in res.stdout.splitlines():
                     if len(line) > 3:
                         status = line[:2]
-                        rel_path = line[3:]
-                        full_path = os.path.join(fs_entry_params.src_dir, rel_path)
+                        rel_path = line[3:].strip('"')
+                        full_path = os.path.normpath(os.path.join(fs_entry_params.src_dir, rel_path)).lower()
                         git_statuses[full_path] = status
                         
                         # Propagate status to parent directories
                         parent_dir = os.path.dirname(full_path)
-                        while parent_dir and parent_dir != fs_entry_params.src_dir and parent_dir != '/':
+                        while parent_dir and parent_dir != os.path.normpath(fs_entry_params.src_dir).lower() and parent_dir != '/':
                             if parent_dir not in git_statuses:
                                 git_statuses[parent_dir] = '* ' # asterisk to indicate changed contents
                             parent_dir = os.path.dirname(parent_dir)
@@ -104,7 +104,7 @@ class DHandler:
 
                 git_indicator = ''
                 if getattr(fs_entry_params, 'git', False):
-                    status = git_statuses.get(entry.realpath)
+                    status = git_statuses.get(os.path.normpath(entry.realpath).lower())
                     if status:
                         git_indicator = f' [{status}]'
 

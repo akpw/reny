@@ -92,6 +92,7 @@ class RenamerCommands(BatchMPBaseCommands):
                         '{}, '.format(cls.STATS),
                         '{}, '.format(cls.INFO),
                         '{}, '.format(cls.IGNORE),
+                        '{}, '.format(cls.CONFIG),
                         '{}, '.format(cls.VERSION),
                         '{}, '.format(cls.ORGANIZE),
                         '{}'  .format(cls.PAD),
@@ -122,6 +123,7 @@ class RenameArgParser(BatchMPArgParser):
         self._add_version(subparsers)
         self._add_info(subparsers)
         self._add_ignore(subparsers)
+        self._add_config(subparsers)
 
         def _add_include_mode_group(parser):
             include_mode_group = parser.add_argument_group('Include for processing')

@@ -1,0 +1,65 @@
+# ============================================================================
+# Reny Configuration File (~/.config/reny/config.toml)
+# ============================================================================
+
+[recursion]
+# Enable recursive descent into subdirectories (-r / --recursive)
+recursive = false
+
+# Initial nested level for printing (-sl / --start-level)
+start_level = 0
+
+# Target level for tree traversal (-el / --end-level)
+# 0 = current directory only, 1 = 1 level down, etc.
+end_level = 0
+
+[filtering]
+# Include Unix-style name patterns separated as array (-in / --include)
+# Example: include = ["*.md", "*.py"]
+include = []
+
+# Exclude Unix-style name patterns (-ex / --exclude)
+# Reny excludes all hidden dotfiles/dotfolders by default:
+exclude = [".*"]
+
+# Read Unix-style ignore patterns from a custom file (-ig / --ignore-file)
+ignore_file = "~/.renyignore"
+
+# Disable include/exclude patterns on directories (-ad / --all-dirs)
+all_dirs = false
+
+# Disable include/exclude patterns on files (-af / --all-files)
+all_files = false
+
+[media]
+# Filter by file media type (-ft / --file-type)
+# Choices: "any", "image", "video", "audio", "media", "nonmedia", "playable", "nonplayable"
+file_type = "any"
+
+[views]
+# Show file and directory sizes (-ss / --show-size)
+show_size = false
+
+# Virtual view or organization strategy (-b / --by)
+# Choices: "", "type", "date"
+by = ""
+
+# Date format for subdirectories when using by = "date" (-df / --date-format)
+date_format = "%Y-%m-%d"
+
+[misc]
+# Sorting order for files and folders (-s / --sort)
+# Choices: "na" (name asc), "nd" (name desc), "sa" (size asc), "sd" (size desc)
+sort = "na"
+
+# Indent string for printing nested directories (-ni / --nested_indent)
+nested_indent = "  "
+
+# Disable visualising changes & info messages during processing (-q / --quiet)
+quiet = false
+
+# Color output (-c / --color): 1 = enable, 0 = disable
+color = 1
+
+# Show Git status indicators (-g / --git)
+git = false

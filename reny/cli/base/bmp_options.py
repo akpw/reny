@@ -43,6 +43,7 @@ class BatchMPBaseCommands:
     VERSION = 'version'
     INFO = 'info'
     IGNORE = 'ignore'
+    CONFIG = 'config'
     PRINT = 'print'
 
     @classmethod
@@ -50,6 +51,7 @@ class BatchMPBaseCommands:
         return ''.join(('{',
                         '{}, '.format(cls.INFO),
                         '{}, '.format(cls.IGNORE),
+                        '{}, '.format(cls.CONFIG),
                         '{}'.format(cls.VERSION),
                         '}'))
 
@@ -169,6 +171,7 @@ class BatchMPArgParser:
         self._add_version(subparsers)
         self._add_info(subparsers)
         self._add_ignore(subparsers)
+        self._add_config(subparsers)
 
     # Args checking
     def check_cmd_args(self, args, parser,
@@ -186,11 +189,90 @@ class BatchMPArgParser:
     def default_command(self, args, parser):
         args['sub_cmd'] = BatchMPBaseCommands.INFO
 
+    @staticmethod
+    def load_config_defaults(args):
+        """Loads default settings from ~/.config/reny/config.toml or ./.reny.toml"""
+        if os.environ.get('DISABLE_CONFIG_FOR_TESTS') == '1':
+            return
+
+        config_path = None
+        target_dir = args.get('dir', '.')
+        local_config = os.path.join(target_dir, '.reny.toml')
+        global_config = os.path.expanduser('~/.config/reny/config.toml')
+
+        if os.path.exists(local_config):
+            config_path = local_config
+        elif os.path.exists(global_config):
+            config_path = global_config
+
+        if not config_path:
+            return
+
+        try:
+            if sys.version_info >= (3, 11):
+                import tomllib
+                with open(config_path, 'rb') as f:
+                    cfg = tomllib.load(f)
+            else:
+                return
+
+            recursion = cfg.get('recursion', cfg.get('defaults', {}))
+            filtering = cfg.get('filtering', {})
+            media = cfg.get('media', {})
+            views = cfg.get('views', {})
+            misc = cfg.get('misc', {})
+
+            if 'recursive' in recursion and '-r' not in sys.argv and '--recursive' not in sys.argv:
+                args['recursive'] = bool(recursion['recursive'])
+            if 'start_level' in recursion and '-sl' not in sys.argv and '--start-level' not in sys.argv:
+                args['start_level'] = int(recursion['start_level'])
+            if 'end_level' in recursion and '-el' not in sys.argv and '--end-level' not in sys.argv:
+                args['end_level'] = int(recursion['end_level'])
+
+            if 'include' in filtering and isinstance(filtering['include'], list) and filtering['include'] and '-in' not in sys.argv and '--include' not in sys.argv:
+                args['include'] = ';'.join(filtering['include'])
+            if 'exclude' in filtering and isinstance(filtering['exclude'], list) and filtering['exclude'] and '-ex' not in sys.argv and '--exclude' not in sys.argv:
+                args['exclude'] = ';'.join(filtering['exclude'])
+            if 'ignore_file' in filtering and filtering['ignore_file'] and '-ig' not in sys.argv and '--ignore-file' not in sys.argv:
+                args['ignore_file'] = filtering['ignore_file']
+            if 'all_dirs' in filtering and '-ad' not in sys.argv and '--all-dirs' not in sys.argv:
+                args['all_dirs'] = bool(filtering['all_dirs'])
+            if 'all_files' in filtering and '-af' not in sys.argv and '--all-files' not in sys.argv:
+                args['all_files'] = bool(filtering['all_files'])
+
+            if 'file_type' in media and '-ft' not in sys.argv and '--file-type' not in sys.argv:
+                args['file_type'] = media['file_type']
+
+            if 'show_size' in views and '-ss' not in sys.argv and '--show-size' not in sys.argv:
+                args['show_size'] = bool(views['show_size'])
+            if 'by' in views and '-b' not in sys.argv and '--by' not in sys.argv:
+                args['by'] = views['by']
+            if 'date_format' in views and '-df' not in sys.argv and '--date-format' not in sys.argv:
+                args['date_format'] = views['date_format']
+
+            if 'sort' in misc and '-s' not in sys.argv and '--sort' not in sys.argv:
+                args['sort'] = misc['sort']
+            if 'nested_indent' in misc and '-ni' not in sys.argv and '--nested_indent' not in sys.argv:
+                args['nested_indent'] = misc['nested_indent']
+            if 'quiet' in misc and '-q' not in sys.argv and '--quiet' not in sys.argv:
+                args['quiet'] = bool(misc['quiet'])
+            if 'color' in misc and '-c' not in sys.argv and '--color' not in sys.argv:
+                args['color'] = int(misc['color'])
+            if 'git' in misc and '-g' not in sys.argv and '--git' not in sys.argv:
+                args['git'] = bool(misc['git'])
+            elif 'git' in cfg.get('defaults', {}) and '-g' not in sys.argv and '--git' not in sys.argv:
+                args['git'] = bool(cfg['defaults']['git'])
+        except Exception:
+            pass
+
     def check_args(self, args, parser):
         ''' Validation of supplied CLI arguments
         '''
         # check if there is a cmd to execute
         self.check_cmd_args(args, parser)
+
+        # load config defaults from ~/.config/reny/config.toml or ./.reny.toml
+        self.load_config_defaults(args)
 
         # ignore file processing
         ignore_path = None
@@ -370,6 +452,17 @@ class BatchMPArgParser:
         init_parser.add_argument('-gl', '--global', dest='global_ignore',
                                  action='store_true',
                                  help='Generate the template globally (~/.renyignore)')
+
+    @staticmethod
+    def _add_config(parser):
+        ''' Adds the config command
+        '''
+        config_parser = parser.add_parser(BatchMPBaseCommands.CONFIG,
+                                description = 'Generates a default config.toml template file (~/.config/reny/config.toml)',
+                                        formatter_class=BatchMPHelpFormatter)
+        config_parser.add_argument('-l', '--local', dest='local_config',
+                                 action='store_true',
+                                 help='Generate the config template locally (./.reny.toml)')
 
 
 

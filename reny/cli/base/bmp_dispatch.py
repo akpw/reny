@@ -36,6 +36,9 @@ class BatchMPDispatcher:
         elif args['sub_cmd'] == BatchMPBaseCommands.IGNORE:
             self.generate_ignore(args.get('global_ignore', False), args.get('dir', '.'))
 
+        elif args['sub_cmd'] == BatchMPBaseCommands.CONFIG:
+            self.generate_config(args.get('local_config', False), args.get('dir', '.'))
+
         else:
             # nothing to dispatch
             return False
@@ -55,16 +58,47 @@ class BatchMPDispatcher:
 
     def generate_ignore(self, is_global, target_dir):
         import os
+        import sys
         import shutil
         template_src = os.path.join(os.path.dirname(__file__), 'renyignore.template')
-        
+
         if not os.path.exists(template_src):
             print("Reny: error: Could not find renyignore.template")
             return
 
         target_path = os.path.expanduser('~/.renyignore') if is_global else os.path.join(target_dir, '.renyignore')
         if os.path.exists(target_path):
-            print(f"Reny: error: '{target_path}' already exists. Aborting to prevent overwrite.")
+            print(f"Ignore file: {target_path}")
+            editor = os.environ.get('EDITOR') or os.environ.get('VISUAL') or 'nvim'
+            if sys.stdout.isatty():
+                os.system(f"{editor} '{target_path}'")
+            return
+
+        shutil.copy(template_src, target_path)
+        print(f"Successfully generated ignore template at: {target_path}")
+
+    def generate_config(self, is_local, target_dir):
+        import os
+        import sys
+        import shutil
+        template_src = os.path.join(os.path.dirname(__file__), 'renyconfig.template')
+
+        if not os.path.exists(template_src):
+            print("Reny: error: Could not find renyconfig.template")
+            return
+
+        if is_local:
+            target_path = os.path.join(target_dir, '.reny.toml')
+        else:
+            config_dir = os.path.expanduser('~/.config/reny')
+            os.makedirs(config_dir, exist_ok=True)
+            target_path = os.path.join(config_dir, 'config.toml')
+
+        if os.path.exists(target_path):
+            print(f"Config file: {target_path}")
+            editor = os.environ.get('EDITOR') or os.environ.get('VISUAL') or 'nvim'
+            if sys.stdout.isatty():
+                os.system(f"{editor} '{target_path}'")
             return
 
         shutil.copy(template_src, target_path)
