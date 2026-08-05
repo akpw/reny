@@ -144,6 +144,7 @@ class FSEntryParamsBase():
     # media_scan removed
 
     git = BooleanPropertyDescriptor()
+    git_only = BooleanPropertyDescriptor()
     color = PropertyDescriptor()
 
     fs_entry_builder = LazyClassPropertyDescriptor('reny.fstools.builders.fsb.FSEntryBuilderBase')
@@ -167,6 +168,9 @@ class FSEntryParamsBase():
         self.show_size = args.get('show_size', False)
         # fast_scan removed
         self.git = args.get('git', False)
+        self.git_only = args.get('git_only', False)
+        if self.git_only:
+            self.git = True
         self.color = args.get('color', 1)
 
         #self._media_extensions_cache = set()

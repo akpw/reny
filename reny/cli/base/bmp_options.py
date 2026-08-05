@@ -425,6 +425,9 @@ class BatchMPArgParser:
         misc_group.add_argument("-g", "--git", dest="git", 
                     help="Show git status", 
                     action="store_true")
+        misc_group.add_argument("-go", "--git-only", dest="git_only", 
+                    help="Show only files with git status modifications", 
+                    action="store_true")
 
     @staticmethod
     def _add_version(parser):
