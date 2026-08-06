@@ -6,7 +6,7 @@ text/dates) and advanced operations like multi-level indexing and folder flatten
 default, Reny safely visualizes all targeted changes and requires confirmation before
 modifying the filesystem.
 
-<img width="800" alt="demo" src="https://github.com/user-attachments/assets/973467b0-8bb0-4d87-9f8c-be717d96aabc" />
+<img width="800" alt="demo" src="https://github.com/user-attachments/assets/023b077f-6c5b-42ed-a767-0ef21f36e273" />
 
 *For an in-depth dive into all features and capabilities, check out the [Reny: Advanced File Management blog post](https://akpw.github.io/articles/2026/08/06/Reny-Organize-and-More.html)!*
 
