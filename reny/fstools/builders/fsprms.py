@@ -145,6 +145,7 @@ class FSEntryParamsBase():
 
     git = BooleanPropertyDescriptor()
     git_only = BooleanPropertyDescriptor()
+    git_tracked = BooleanPropertyDescriptor()
     color = PropertyDescriptor()
 
     fs_entry_builder = LazyClassPropertyDescriptor('reny.fstools.builders.fsb.FSEntryBuilderBase')
@@ -169,7 +170,8 @@ class FSEntryParamsBase():
         # fast_scan removed
         self.git = args.get('git', False)
         self.git_only = args.get('git_only', False)
-        if self.git_only:
+        self.git_tracked = args.get('git_tracked', False)
+        if self.git_only or self.git_tracked:
             self.git = True
         self.color = args.get('color', 1)
 

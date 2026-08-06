@@ -50,6 +50,7 @@ class DHandler:
         shared_cache = {}
 
         git_statuses = {}
+        git_tracked_files = set()
         if getattr(fs_entry_params, 'git', False):
             try:
                 # Get git root to resolve paths correctly
@@ -73,8 +74,26 @@ class DHandler:
                                 if parent_dir not in git_statuses:
                                     git_statuses[parent_dir] = '* ' # asterisk to indicate changed contents
                                 parent_dir = os.path.dirname(parent_dir)
+                                
+                    if getattr(fs_entry_params, 'git_tracked', False):
+                        res_tracked = subprocess.run(['git', '-C', fs_entry_params.src_dir, 'ls-files', '--full-name'], capture_output=True, text=True)
+                        for line in res_tracked.stdout.splitlines():
+                            if line:
+                                rel_path = line.strip('"')
+                                full_path = os.path.normpath(os.path.join(git_root, rel_path)).lower()
+                                git_tracked_files.add(full_path)
+                                parent_dir = os.path.dirname(full_path)
+                                while parent_dir and parent_dir != os.path.normpath(git_root).lower() and parent_dir != '/':
+                                    git_tracked_files.add(parent_dir)
+                                    parent_dir = os.path.dirname(parent_dir)
+
+                else:
+                    if getattr(fs_entry_params, 'git_only', False) or getattr(fs_entry_params, 'git_tracked', False):
+                        print('Warning: Not a git repository')
+
             except Exception:
-                pass
+                if getattr(fs_entry_params, 'git_only', False) or getattr(fs_entry_params, 'git_tracked', False):
+                    print('Warning: Not a git repository')
 
         for entry in DWalker.entries(fs_entry_params, walker):
             # get formatted output
@@ -96,6 +115,9 @@ class DHandler:
                         git_indicator = f' [{status}]'
                 
                 if getattr(fs_entry_params, 'git_only', False) and not git_indicator:
+                    continue
+
+                if getattr(fs_entry_params, 'git_tracked', False) and os.path.normpath(entry.realpath).lower() not in git_tracked_files:
                     continue
 
                 size = ''
