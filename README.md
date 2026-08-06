@@ -32,7 +32,7 @@ pipx install reny
 - *Filtering*: Pinpoint targeting using include/exclude patterns and `.renyignore` integration
 - *Color Outputs*: Rich terminal highlighting for different file types, grouping extensions visually
 - *Virtual Views*: Preview how a directory structure would look when reorganised by type, size, or date without moving or changing anything
-- *Git Integration*: Automatically detects and displays file and directory modification statuses using `--git`
+- *Git Integration*: Automatically detects and displays file and directory modification statuses using `--git` (`-g`), or filters the view to show only modified files using `--git-only` (`-go`).
 - *Dry-Run by Default*: `reny` always visualizes targeted changes and asks for confirmation before actually touching files / folders
 - *Indexing*: Multi-level indexing across nested directories, supporting multiple indexing schemes
 - *Padding*: Automatically pad existing numbers in filenames with leading zeros to fix sorting orders
@@ -41,7 +41,28 @@ pipx install reny
 
 ## Usage & Examples
 
-### 1. Basic Visualization
+### 1. Configuration File (`config.toml`)
+Since `reny` comes with many options, it supports setting default configurations via a TOML file to make organizing and using them much easier. 
+
+The global configuration file is located at `~/.config/reny/config.toml`, but you can also use a local `./.reny.toml` on a per-directory basis.
+
+Generate a fully-commented default configuration template (or open an existing one in your `$EDITOR`):
+```bash
+reny config            # Generates or opens ~/.config/reny/config.toml
+reny config --local    # Generates or opens ./.reny.toml in current directory
+```
+
+Any options specified on the command line automatically override settings in the config file.
+
+### 2. Ignore File Management (`reny ignore`)
+`reny` supports generating and managing ignore template files to exclude unwanted files or directories from operations:
+
+```bash
+reny ignore            # Generates or opens ./.renyignore in current directory
+reny ignore -gl        # Generates or opens ~/.renyignore globally
+```
+
+### 3. Basic Visualization
 Print the current directory structure:
 ```bash
 reny
@@ -57,7 +78,8 @@ reny
 4 files, 2 folders
 ```
 
-### 2. Recursion Control (`-r`/`--recursive`, `-sl`/`--start-level`, `-el`/`--end-level`)
+
+### 4. Recursion Control (`-r`/`--recursive`, `-sl`/`--start-level`, `-el`/`--end-level`)
 Easily adjust how deep `reny` prints or operates. For example, to view files and directories exactly 1 level deep:
 ```bash
 reny -el 1
@@ -79,7 +101,8 @@ reny -el 1
 4 files, 8 folders
 ```
 
-### 3. Filtering & Ignore Files (`-in`/`--include`, `-ex`/`--exclude`, `-ig`/`--ignore-file`)
+
+### 5. Filtering & Ignore Files (`-in`/`--include`, `-ex`/`--exclude`, `-ig`/`--ignore-file`)
 By default, `reny` automatically excludes hidden files and directories (like `.git` and `.venv`). Additional filters can be set via `-in` / `-ex` parameters, or via a `.renyignore` file in the target directory or globally in `~/.renyignore`. `reny` also supports custom ignore files, like a standard `.gitignore`:
 ```bash
 reny -el 1 -ig .gitignore 
@@ -103,7 +126,8 @@ reny -el 1 -ig .gitignore
 6 files, 8 folders
 ```
 
-### 4. Virtual Views & Organization (`-b`/`--by`, `-ss`/`--show-size`, `-s`/`--sort`)
+
+### 6. Virtual Views & Organization (`-b`/`--by`, `-ss`/`--show-size`, `-s`/`--sort`)
 Preview how a chaotic downloads folder would look if organized by file type, sorted by size descending, without actually moving anything:
 ```bash
 reny -b type -s sd -ss
@@ -126,7 +150,8 @@ To actually commit this organization and move the files, simply use the `organiz
 reny organize -b type
 ```
 
-### 5. Git Integration (`--git`)
+
+### 7. Git Integration (`-g`/`--git`, `-go`/`--git-only`)
 Visually inspect changes in a repository. `reny` automatically bubbles up file modifications to their parent directories.
 ```bash
 reny -el 1 -ig .gitignore --git
@@ -150,26 +175,19 @@ reny -el 1 -ig .gitignore --git
 6 files, 8 folders
 ```
 
-### 6. Configuration File (`config.toml`)
-`reny` supports setting default options via a TOML configuration file located at `~/.config/reny/config.toml` (or a local `./.reny.toml`).
-
-Generate a fully-commented default configuration template (or open an existing one in your `$EDITOR`):
+To exclusively view files with git modifications (and their parent directories), hiding all unmodified clutter (similar to `git status`), use the `--git-only` (or `-go`) flag:
 ```bash
-reny config            # Generates or opens ~/.config/reny/config.toml
-reny config --local    # Generates or opens ./.reny.toml in current directory
+reny -el 1 -ig .gitignore -go
+```
+```text
+/../_Dev/reny
+  |- README.md [ M]
+  |->/reny [* ]
+    |-/cli [* ]
+1 file, 2 folders
 ```
 
-Any options specified on the command line automatically override settings in the config file.
-
-### 7. Ignore File Management (`reny ignore`)
-`reny` supports generating and managing ignore template files to exclude unwanted files or directories from operations:
-
-```bash
-reny ignore            # Generates or opens ./.renyignore in current directory
-reny ignore -gl        # Generates or opens ~/.renyignore globally
-```
-
-### 8. Advanced Batch Renaming (Commands)
+### 7. Advanced Batch Renaming (Commands)
 When you are ready to modify your files, `reny` operates purely as a dry-run by default. It safely visualizes all targeted changes and asks for confirmation before any files are moved or renamed.
 
 `reny` supports a variety of targeted commands for bulk renaming:
