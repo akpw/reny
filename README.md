@@ -8,10 +8,11 @@ modifying the filesystem.
 
 <img width="800" alt="demo" src="https://github.com/user-attachments/assets/023b077f-6c5b-42ed-a767-0ef21f36e273" />
 
-*For an in-depth dive into all features and capabilities, check out the [Reny: Advanced File Management blog post](https://akpw.github.io/articles/2026/08/06/Reny-Organize-and-More.html)!*
-
 ## Background
 `reny` was originally created as the `renamer` component inside the larger [`batchmp`](https://github.com/akpw/batch-mp-tools) suite. It was spun off to provide a pure-filesystem organizing tool without media dependencies. 
+
+## Blogs
+ - [Reny: Advanced File Management](https://akpw.github.io/articles/2026/08/06/Reny-Organize-and-More.html)
 
 ## Installation
 Homebrew:
