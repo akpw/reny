@@ -6,7 +6,7 @@ text/dates) and advanced operations like multi-level indexing and folder flatten
 default, Reny safely visualizes all targeted changes and requires confirmation before
 modifying the filesystem.
 
-<img width="800" alt="demo" src="https://github.com/user-attachments/assets/4f57cc38-7749-4e0a-87b8-7d44dccca3ef" />
+<img width="800" alt="demo" src="https://github.com/user-attachments/assets/973467b0-8bb0-4d87-9f8c-be717d96aabc" />
 
 ## Background
 `reny` was originally created as the `renamer` component inside the larger [`batchmp`](https://github.com/akpw/batch-mp-tools) suite. It was spun off to provide a pure-filesystem organizing tool without media dependencies. 
@@ -34,6 +34,7 @@ pipx install reny
 - *Filtering*: Pinpoint targeting using include/exclude patterns and `.renyignore` integration
 - *Color Outputs*: Rich terminal highlighting for different file types, grouping extensions visually
 - *Virtual Views*: Preview how a directory structure would look when reorganised by type, size, or date without moving or changing anything
+- *Organization*: Safely re-organizes directory structure based on type, size, or date attributes
 - *Git Integration*: Automatically detects and displays file and directory modification statuses using `--git` (`-g`), or filters the view to show only modified files using `--git-only` (`-go`).
 - *Dry-Run by Default*: `reny` always visualizes targeted changes and asks for confirmation before actually touching files / folders
 - *Indexing*: Multi-level indexing across nested directories, supporting multiple indexing schemes

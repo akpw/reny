@@ -392,7 +392,7 @@ class DHandler:
         if fs_entry_params.quiet:
             proceed = True
         else:
-            proceed, _, _ = DHandler.visualise_changes(preview_params, virtual_walker)
+            proceed, _, _ = DHandler.visualise_changes(preview_params, virtual_walker, fs_preprocess_entry_params=fs_entry_params)
 
         if proceed and fcnt > 0:
             moved_files_cnt = 0
