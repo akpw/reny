@@ -12,7 +12,7 @@ modifying the filesystem.
 `reny` was originally created as the `renamer` component inside the larger [`batchmp`](https://github.com/akpw/batch-mp-tools) suite. It was spun off to provide a pure-filesystem organizing tool without media dependencies. 
 
 ## Blogs
- - [Reny: Advanced File Management](https://akpw.github.io/articles/2026/08/06/Reny-Organize-and-More.html)
+ - [The Next Chapter in File Organization: Introducing Reny](https://akpw.github.io/articles/2026/08/06/Reny-Organize-and-More.html)
 
 ## Installation
 Homebrew:
@@ -36,8 +36,8 @@ pipx install reny
 - *Recursion & Leveling*: Precise recursion control with `end_level` / `start_level` parameters
 - *Filtering*: Pinpoint targeting using include/exclude patterns and `.renyignore` integration
 - *Color Outputs*: Rich terminal highlighting for different file types, grouping extensions visually
-- *Virtual Views*: Preview how a directory structure would look when reorganised by type, size, or date without moving or changing anything
-- *Organization*: Safely re-organizes directory structure based on type, size, or date attributes
+- *Virtual Views*: Preview how a directory structure would look when reorganised by type or date without moving or changing anything
+- *Organization*: Safely re-organizes directory structure based on type or date attributes
 - *Git Integration*: Automatically detects and displays file and directory modification statuses using `--git` (`-g`), filters to show only modified files using `--git-only` (`-go`), or filters to show only tracked files using `--git-tracked` (`-gt`).
 - *Dry-Run by Default*: `reny` always visualizes targeted changes and asks for confirmation before actually touching files / folders
 - *Indexing*: Multi-level indexing across nested directories, supporting multiple indexing schemes
@@ -68,7 +68,7 @@ reny ignore            # Generates or opens ./.renyignore in current directory
 reny ignore -gl        # Generates or opens ~/.renyignore globally
 ```
 
-### 3. Basic Visualization
+### 3. Basic Visualization (No flags)
 Print the current directory structure:
 ```bash
 reny
@@ -78,10 +78,9 @@ reny
   |- LICENSE
   |- pyproject.toml
   |- README.md
-  |- setup.py
   |-/reny
   |-/tests
-4 files, 2 folders
+3 files, 2 folders
 ```
 
 
@@ -95,7 +94,6 @@ reny -el 1
   |- LICENSE
   |- pyproject.toml
   |- README.md
-  |- setup.py
   |->/reny
     |-/cli
     |-/commons
@@ -104,7 +102,7 @@ reny -el 1
     |-/base
     |-/commons
     |-/fs
-4 files, 8 folders
+3 files, 8 folders
 ```
 
 
@@ -118,7 +116,6 @@ reny -el 1 -ig .gitignore
   |- LICENSE
   |- pyproject.toml
   |- README.md 
-  |- setup.py
   |->/reny
     |- __init__.py
     |-/cli
@@ -129,7 +126,7 @@ reny -el 1 -ig .gitignore
     |-/base
     |-/commons
     |-/fs
-6 files, 8 folders
+5 files, 8 folders
 ```
 
 
@@ -141,15 +138,17 @@ reny -b type -s sd -ss
 ```text
 Virtual view by type:
 ~/Downloads
-  |->/video
-    |- vacation_movie.mp4 (1.2 GB)
-    |- screen_recording.mov (450 MB)
-  |->/document
-    |- tax_return.pdf (2.1 MB)
-    |- receipt.pdf (450 KB)
-  |->/image
-    |- screenshot.png (1.2 MB)
-5 files, 3 folders
+  |->/mp4
+    |-  1.2GB vacation_movie.mp4
+  |->/mov
+    |-  450MB screen_recording.mov
+  |->/pdf
+    |-  2.1MB tax_return.pdf
+    |-  450KB receipt.pdf
+  |->/png
+    |-  1.2MB screenshot.png
+5 files, 4 folders
+Total selected entries size: 1.6GB
 ```
 To actually commit this organization and move the files, simply use the `organize` command. As always, `reny` will show a preview and ask for confirmation before actually making any changes:
 ```bash
@@ -167,7 +166,6 @@ reny -el 1 -ig .gitignore --git
   |- LICENSE
   |- pyproject.toml
   |- README.md [ M]
-  |- setup.py
   |->/reny [* ]
     |- __init__.py
     |-/cli [* ]
@@ -178,7 +176,7 @@ reny -el 1 -ig .gitignore --git
     |-/base
     |-/commons
     |-/fs
-6 files, 8 folders
+5 files, 8 folders
 ```
 
 To exclusively view files with git modifications (and their parent directories), hiding all unmodified clutter (similar to `git status`), use the `--git-only` (or `-go`) flag:
@@ -195,7 +193,7 @@ reny -el 1 -ig .gitignore -go
 
 Similarly, you can use the `--git-tracked` (or `-gt`) flag to filter the view so it exclusively shows files that are already tracked by Git, completely ignoring untracked files and directories.
 
-### 7. Advanced Batch Renaming (Commands)
+### 8. Advanced Batch Renaming (Commands)
 When you are ready to modify your files, `reny` operates purely as a dry-run by default. It safely visualizes all targeted changes and asks for confirmation before any files are moved or renamed.
 
 `reny` supports a variety of targeted commands for bulk renaming:
@@ -241,8 +239,10 @@ reny replace -fs '^.{1,3}' -rs ''
 ```
 
 ## Documentation
-While `reny` is standalone, its core logic inherits from `batchmp`. You can find more tutorials in the original blog posts:
-- [Reny: Advanced File Management & Virtual Views](https://akpw.github.io/articles/2026/08/06/Reny-Organize-and-More.html)
+For a deep dive into the latest capabilities, see the official announcement:
+- [The Next Chapter in File Organization: Introducing Reny](https://akpw.github.io/articles/2026/08/06/Reny-Organize-and-More.html)
+
+While `reny` is standalone, its core logic inherits from `batchmp`. You can find historical context and tutorials in the original blog posts:
 - [Renamer Organize & Virtual Views](https://akpw.github.io/articles/2025/09/22/Print-and-Organize.html)
 - [BatchMP Tools Tutorial](https://akpw.github.io/articles/2015/04/11/batchmp-tutorial-part-ii.html)
 
