@@ -239,7 +239,7 @@ reny replace -fs '^.{1,3}' -rs ''
 ```
 
 ## Documentation
-For a deep dive into the latest capabilities, see the official announcement:
+For a deep dive:
 - [The Next Chapter in File Organization: Introducing Reny](https://akpw.github.io/articles/2026/08/06/Reny-Organize-and-More.html)
 
 While `reny` is standalone, its core logic inherits from `batchmp`. You can find historical context and tutorials in the original blog posts:
