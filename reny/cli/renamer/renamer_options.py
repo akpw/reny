@@ -327,7 +327,9 @@ class RenameArgParser(BatchMPArgParser):
         if args['sub_cmd'] == RenamerCommands.FLATTEN:
             if args['file']:
                 parser.error('This operation requires a source directory')
-            if args['end_level'] <= args['target_level']:
+            if '-el' not in sys.argv and '--end-level' not in sys.argv:
+                args['end_level'] = sys.maxsize
+            elif args['end_level'] <= args['target_level']:
                 #print ('Target Level should be greater than or equal to the End Level Global Option\n'
                 #           '... Adjusting End Level to: {}'.format(args['target_level']))
                 args['end_level'] = args['target_level']

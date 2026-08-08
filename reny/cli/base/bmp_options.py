@@ -29,14 +29,15 @@
         [-q, --quiet]               Do not visualise changes / show messages during processing
 """
 
-import os, sys, string
+import os
+import string
+import sys
 from argparse import ArgumentParser, HelpFormatter
-from reny.commons.utils import strtobool
 from urllib.parse import urlparse
-from reny.commons.utils import MiscHelpers
-from reny.fstools.fsutils import FSH
-from reny.fstools.builders.fsentry import FSEntry, FSEntryDefaults
 
+from reny.commons.utils import MiscHelpers, strtobool
+from reny.fstools.builders.fsentry import FSEntry, FSEntryDefaults
+from reny.fstools.fsutils import FSH
 
 
 class BatchMPBaseCommands:
@@ -146,9 +147,6 @@ class BatchMPArgParser:
                     default =  FSEntryDefaults.DEFAULT_FILE_TYPE)
 
         view_org_group = parser.add_argument_group('Virtual Views & Organization')
-        view_org_group.add_argument('-ss', '--show-size', dest = 'show_size',
-                help ='Show files size',
-                action = 'store_true')
         view_org_group.add_argument('-b', '--by', dest = 'by',
                 help = 'Organization strategy or virtual view by type or date',
                 type = str,
@@ -159,6 +157,8 @@ class BatchMPArgParser:
                 default = '%Y-%m-%d')
 
 
+        # Add Default Git Integration Group
+        self._add_arg_git_group(parser)
         # Add Default Miscellaneous Group
         self._add_arg_misc_group(parser)
 
@@ -287,7 +287,8 @@ class BatchMPArgParser:
                 if os.path.exists(global_ignore):
                     ignore_path = global_ignore
 
-        if ignore_path and os.path.exists(ignore_path):
+        # Skip .renyignore if we explicitly want to see ignored or untracked files
+        if ignore_path and os.path.exists(ignore_path) and not args.get('git_ignored') and not args.get('not_git_tracked'):
             with open(ignore_path, 'r') as f:
                 patterns = [line.strip().rstrip('/') for line in f if line.strip() and not line.startswith('#')]
                 if patterns:
@@ -296,6 +297,9 @@ class BatchMPArgParser:
                         args['exclude'] += ';' + ignore_str
                     else:
                         args['exclude'] = ignore_str
+                        
+        if (args.get('git_ignored') or args.get('not_git_tracked')) and args.get('exclude') == FSEntryDefaults.DEFAULT_EXCLUDE:
+            args['exclude'] = ''
 
         # if input source is a file, need to adjust
         if args['file']:
@@ -407,29 +411,42 @@ class BatchMPArgParser:
     @staticmethod
     def _add_arg_misc_group(parser):
         misc_group = parser.add_argument_group('Miscellaneous')
+        misc_group.add_argument('-ss', '--show-size', dest = 'show_size',
+                help ='Show files size',
+                action = 'store_true')
         misc_group.add_argument('-s', '--sort', dest = 'sort',
-                    help = "Sorting for files ('na', i.e. by name ascending by default)",
+                    help = "Sorting for files ('na', i.e. by name ascending by default). Also 'sa'/'sd' for size, 'da'/'dd' for date.",
                     type = str,
-                    choices = ['na', 'nd', 'sa', 'sd'],
+                    choices = ['na', 'nd', 'sa', 'sd', 'da', 'dd'],
                     default = FSEntryDefaults.DEFAULT_SORT)
-        misc_group.add_argument('-ni', '--nested_indent', dest = 'nested_indent',
-                    help = "Indent for printing  nested directories",
-                    type = str,
-                    default = '  ')
         misc_group.add_argument("-q", "--quiet", dest = 'quiet',
                     help = "Disable visualising changes & displaying info messages during processing",
                     action = 'store_true')
         misc_group.add_argument("-c", "--color", dest="color", 
                     help="Color output (0 or 1, default 1)", 
                     type=int, choices=[0, 1], default=1)
-        misc_group.add_argument("-g", "--git", dest="git", 
+        misc_group.add_argument('-ni', '--nested_indent', dest = 'nested_indent',
+                    help = "Indent for printing  nested directories",
+                    type = str,
+                    default = '  ')
+
+    @staticmethod
+    def _add_arg_git_group(parser):
+        git_group = parser.add_argument_group('Git Integration')
+        git_group.add_argument("-g", "--git", dest="git", 
                     help="Show git status", 
                     action="store_true")
-        misc_group.add_argument("-go", "--git-only", dest="git_only", 
+        git_group.add_argument("-go", "--git-only", dest="git_only", 
                     help="Show only files with git status modifications", 
                     action="store_true")
-        misc_group.add_argument("-gt", "--git-tracked", dest="git_tracked", 
+        git_group.add_argument("-gt", "--git-tracked", dest="git_tracked", 
                     help="Show only git tracked files", 
+                    action="store_true")
+        git_group.add_argument("-ngt", "--not-git-tracked", dest="not_git_tracked", 
+                    help="Show only files not tracked in git (bypasses .renyignore)", 
+                    action="store_true")
+        git_group.add_argument("-gi", "--git-ignored", dest="git_ignored", 
+                    help="Show only git ignored files (bypasses .renyignore)", 
                     action="store_true")
 
     @staticmethod

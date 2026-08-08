@@ -51,6 +51,11 @@ class DHandler:
 
         git_statuses = {}
         git_tracked_files = set()
+        not_git_tracked_files = set()
+        not_git_tracked_dirs = set()
+        git_ignored_files = set()
+        git_ignored_dirs = set()
+        
         if getattr(fs_entry_params, 'git', False):
             try:
                 # Get git root to resolve paths correctly
@@ -87,12 +92,36 @@ class DHandler:
                                     git_tracked_files.add(parent_dir)
                                     parent_dir = os.path.dirname(parent_dir)
 
+                    if getattr(fs_entry_params, 'not_git_tracked', False):
+                        res_untracked = subprocess.run(['git', '-C', fs_entry_params.src_dir, 'ls-files', '--others', '--exclude-standard', '--full-name'], capture_output=True, text=True)
+                        for line in res_untracked.stdout.splitlines():
+                            if line:
+                                rel_path = line.strip('"')
+                                full_path = os.path.normpath(os.path.join(git_root, rel_path)).lower()
+                                not_git_tracked_files.add(full_path)
+                                parent_dir = os.path.dirname(full_path)
+                                while parent_dir and parent_dir != os.path.normpath(git_root).lower() and parent_dir != '/':
+                                    not_git_tracked_dirs.add(parent_dir)
+                                    parent_dir = os.path.dirname(parent_dir)
+
+                    if getattr(fs_entry_params, 'git_ignored', False):
+                        res_ignored = subprocess.run(['git', '-C', fs_entry_params.src_dir, 'ls-files', '--others', '--ignored', '--exclude-standard', '--full-name'], capture_output=True, text=True)
+                        for line in res_ignored.stdout.splitlines():
+                            if line:
+                                rel_path = line.strip('"')
+                                full_path = os.path.normpath(os.path.join(git_root, rel_path)).lower()
+                                git_ignored_files.add(full_path)
+                                parent_dir = os.path.dirname(full_path)
+                                while parent_dir and parent_dir != os.path.normpath(git_root).lower() and parent_dir != '/':
+                                    git_ignored_dirs.add(parent_dir)
+                                    parent_dir = os.path.dirname(parent_dir)
+
                 else:
-                    if getattr(fs_entry_params, 'git_only', False) or getattr(fs_entry_params, 'git_tracked', False):
+                    if getattr(fs_entry_params, 'git_only', False) or getattr(fs_entry_params, 'git_tracked', False) or getattr(fs_entry_params, 'not_git_tracked', False) or getattr(fs_entry_params, 'git_ignored', False):
                         print('Warning: Not a git repository')
 
             except Exception:
-                if getattr(fs_entry_params, 'git_only', False) or getattr(fs_entry_params, 'git_tracked', False):
+                if getattr(fs_entry_params, 'git_only', False) or getattr(fs_entry_params, 'git_tracked', False) or getattr(fs_entry_params, 'not_git_tracked', False) or getattr(fs_entry_params, 'git_ignored', False):
                     print('Warning: Not a git repository')
 
         for entry in DWalker.entries(fs_entry_params, walker):
@@ -110,15 +139,11 @@ class DHandler:
             if formatted_output:
                 git_indicator = ''
                 if getattr(fs_entry_params, 'git', False):
-                    status = git_statuses.get(os.path.normpath(entry.realpath).lower())
-                    if status:
-                        git_indicator = f' [{status}]'
-                
-                if getattr(fs_entry_params, 'git_only', False) and not git_indicator:
-                    continue
-
-                if getattr(fs_entry_params, 'git_tracked', False) and os.path.normpath(entry.realpath).lower() not in git_tracked_files:
-                    continue
+                    # We can use the cached git_statuses from fs_entry_params
+                    if getattr(fs_entry_params, '_git_initialized', False):
+                        status = fs_entry_params.git_statuses.get(os.path.normpath(entry.realpath).lower())
+                        if status:
+                            git_indicator = f' [{status}]'
 
                 size = ''
                 if entry.type == FSEntryType.FILE:
@@ -434,7 +459,7 @@ class DHandler:
                 print(f'Organized: {moved_files_cnt} files')
 
         if not fs_entry_params.quiet:
-            print('\\nDone')
+            print('\nDone')
     
     @staticmethod
     def print_organized_view(fs_entry_params):

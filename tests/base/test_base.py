@@ -34,21 +34,18 @@ class BMPTest(unittest.TestCase):
 
         # check the files
         data_fpaths = [rpath(r,f)
-                        for r,d,files in os.walk(cls.src_dir) for f in files]
+                        for r,d,files in os.walk(cls.src_dir) for f in files if f != '.DS_Store']
         bckp_fpaths = [rpath(r,f)
-                        for r,d,files in os.walk(cls.bckp_dir) for f in files]
-        #  num files
-        restore_needed = len(data_fpaths) != len(bckp_fpaths)
+                        for r,d,files in os.walk(cls.bckp_dir) for f in files if f != '.DS_Store']
+
+        # compare relative file paths
+        data_fpaths_rel = set(os.path.relpath(f, cls.src_dir) for f in data_fpaths)
+        bckp_fpaths_rel = set(os.path.relpath(f, cls.bckp_dir) for f in bckp_fpaths)
+        
+        restore_needed = data_fpaths_rel != bckp_fpaths_rel
         if restore_needed:
             if not quiet:
-                print('Need restore on num files mismatch')
-        else:
-            # file names matches
-            restore_needed = set((os.path.basename(f) for f in data_fpaths)) != \
-                             set((os.path.basename(f) for f in bckp_fpaths))
-            if restore_needed:
-                if not quiet:
-                    print('Need restore on files names mismatch')
+                print('Need restore on files paths mismatch')
 
         if not restore_needed:
             # check the dirs
@@ -56,24 +53,20 @@ class BMPTest(unittest.TestCase):
                             for r,dirs,f in os.walk(cls.src_dir) for d in dirs]
             bckp_dpaths = [rpath(r,d)
                             for r,dirs,f in os.walk(cls.bckp_dir) for d in dirs]
-            # num dirs
-            restore_needed = len(data_dpaths) != len(bckp_dpaths)
+            
+            data_dpaths_rel = set(os.path.relpath(d, cls.src_dir) for d in data_dpaths)
+            bckp_dpaths_rel = set(os.path.relpath(d, cls.bckp_dir) for d in bckp_dpaths)
+            
+            restore_needed = data_dpaths_rel != bckp_dpaths_rel
             if restore_needed:
                 if not quiet:
-                    print('Need restore on num dirs mismatch')
-            else:
-                # dir names matches
-                restore_needed = set((os.path.basename(d) for d in data_dpaths)) != \
-                                 set((os.path.basename(d) for d in bckp_dpaths))
-                if restore_needed:
-                    if not quiet:
-                        print('Need restore on dir names mismatch')
+                    print('Need restore on dir paths mismatch')
 
         if not restore_needed:
            # compare files hashes
-            data_fpaths_hashes = {os.path.basename(fpath): FSH.file_md5(fpath, hex=True)
+            data_fpaths_hashes = {os.path.relpath(fpath, cls.src_dir): FSH.file_md5(fpath, hex=True)
                                                         for fpath in data_fpaths}
-            bckp_files_hashes = {os.path.basename(fpath): FSH.file_md5(fpath, hex=True)
+            bckp_files_hashes = {os.path.relpath(fpath, cls.bckp_dir): FSH.file_md5(fpath, hex=True)
                                                         for fpath in bckp_fpaths}
             restore_needed = set(data_fpaths_hashes.items()) != set(bckp_files_hashes.items())
             if restore_needed:

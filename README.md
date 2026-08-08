@@ -6,7 +6,7 @@ text/dates) and advanced operations like multi-level indexing and folder flatten
 default, Reny safely visualizes all targeted changes and requires confirmation before
 modifying the filesystem.
 
-<img width="800" alt="demo" src="https://github.com/user-attachments/assets/023b077f-6c5b-42ed-a767-0ef21f36e273" />
+<img width="800" alt="demo" src="https://github.com/user-attachments/assets/46e6d3b1-11d7-458f-bec2-77e9a3659640" />
 
 ## Background
 `reny` was originally created as the `renamer` component inside the larger [`batchmp`](https://github.com/akpw/batch-mp-tools) suite. It was spun off to provide a pure-filesystem organizing tool without media dependencies. 
@@ -38,7 +38,7 @@ pipx install reny
 - *Color Outputs*: Rich terminal highlighting for different file types, grouping extensions visually
 - *Virtual Views*: Preview how a directory structure would look when reorganised by type or date without moving or changing anything
 - *Organization*: Safely re-organizes directory structure based on type or date attributes
-- *Git Integration*: Automatically detects and displays file and directory modification statuses using `--git` (`-g`), filters to show only modified files using `--git-only` (`-go`), or filters to show only tracked files using `--git-tracked` (`-gt`).
+- *Git Integration*: Automatically detects and displays file and directory modification statuses using `--git` (`-g`), filters to show only modified files (`-go`), tracked files (`-gt`), untracked files (`-ngt`), or explicitly ignored files (`-gi`).
 - *Dry-Run by Default*: `reny` always visualizes targeted changes and asks for confirmation before actually touching files / folders
 - *Indexing*: Multi-level indexing across nested directories, supporting multiple indexing schemes
 - *Padding*: Automatically pad existing numbers in filenames with leading zeros to fix sorting orders
@@ -131,7 +131,7 @@ reny -el 1 -ig .gitignore
 
 
 ### 6. Virtual Views & Organization (`-b`/`--by`, `-ss`/`--show-size`, `-s`/`--sort`)
-Preview how a chaotic downloads folder would look if organized by file type, sorted by size descending, without actually moving anything:
+Preview how a chaotic downloads folder would look if organized by file type, sorted by size descending (you can also sort by date with `da`/`dd`), without actually moving anything:
 ```bash
 reny -b type -s sd -ss
 ```
@@ -156,7 +156,7 @@ reny organize -b type
 ```
 
 
-### 7. Git Integration (`-g`/`--git`, `-go`/`--git-only`, `-gt`/`--git-tracked`)
+### 7. Git Integration (`-g`/`--git`, `-go`/`--git-only`, `-gt`/`--git-tracked`, `-ngt`/`--not-git-tracked`, `-gi`/`--git-ignored`)
 Visually inspect changes in a repository. `reny` automatically bubbles up file modifications to their parent directories.
 ```bash
 reny -el 1 -ig .gitignore --git
@@ -193,6 +193,8 @@ reny -el 1 -ig .gitignore -go
 
 Similarly, you can use the `--git-tracked` (or `-gt`) flag to filter the view so it exclusively shows files that are already tracked by Git, completely ignoring untracked files and directories.
 
+Complementary to this, the `--not-git-tracked` (`-ngt`) flag displays only files that are currently untracked, and `--git-ignored` (`-gi`) reveals all explicitly ignored files (e.g., build artifacts, `__pycache__`, or `.DS_Store` hidden by `.gitignore`). Note that both `-ngt` and `-gi` bypass `reny`'s internal `.renyignore` to ensure you see the true, unvarnished state of your Git repository.
+
 ### 8. Advanced Batch Renaming (Commands)
 When you are ready to modify your files, `reny` operates purely as a dry-run by default. It safely visualizes all targeted changes and asks for confirmation before any files are moved or renamed.
 
@@ -221,6 +223,38 @@ reny pad -md 2
 Safely collapse nested directory structures into a single folder (target level 1):
 ```bash
 reny flatten -tl 1
+```
+
+**Delete (`delete`)**
+
+Safely batch-delete files. When combined with filters, it can e.g. clean up a messy downloads folder or prepare a project for a clean build (e.g., deleting `dist`, `__pycache__`, and `.egg-info` directories). Paired with `-gi`, you can preview and instantly wipe all git-ignored files:
+```bash
+reny -gi -ex .venv delete -id
+```
+```text
+The following files / folders will be deleted
+/reny
+  |-  6KB .DS_Store
+  |->/ 3.4MB .mypy_cache
+    |-  0KB .gitignore
+    |-  0KB CACHEDIR.TAG
+    |-/ 3.4MB 3.14
+  |->/ 5KB .pytest_cache
+    |-  0KB .gitignore
+    |-  0KB CACHEDIR.TAG
+    |-  0KB README.md
+  |->/ 103KB dist
+    |-  56KB reny-1.0.12-py3-none-any.whl
+    |-  47KB reny-1.0.12.tar.gz
+  |->/ 13KB reny.egg-info
+    |-  0KB dependency_links.txt
+    |-  0KB entry_points.txt
+    |-  11KB PKG-INFO
+    |-  0KB requires.txt
+    |-  1KB SOURCES.txt
+    |-  0KB top_level.txt
+14 files, 5 folders
+Total selected entries size: 3.5MB
 ```
 
 **Regex Replace (`replace`, `-fs`/`--find-string`, `-rs`/`--replace-string`)**

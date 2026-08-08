@@ -46,6 +46,10 @@ class FSEntryFilteredFilesValueDescriptor(FSEntryRuntimeAttributeDescriptor):
             else:
                 fnames = [fname for fname in value]
 
+            # filter by git
+            if instance.git:
+                fnames = [fname for fname in fnames if instance.passed_git_filters(os.path.join(instance.rpath, fname), is_dir=False)]
+
             # file types
             if instance.file_type != FSMediaEntryGroupType.ANY:
                 fnames = [fname for fname in fnames if instance.is_of_required_type(os.path.join(instance.rpath, fname))]
@@ -53,6 +57,8 @@ class FSEntryFilteredFilesValueDescriptor(FSEntryRuntimeAttributeDescriptor):
             # sorting
             if instance.by_size:
                 sort_key = lambda fname: os.path.getsize(os.path.join(instance.rpath, fname))
+            elif instance.by_date:
+                sort_key = lambda fname: os.path.getmtime(os.path.join(instance.rpath, fname))
             else:
                 sort_key = lambda fname: fname.lower()
             fnames.sort(key = sort_key, reverse = instance.descending)
@@ -72,7 +78,13 @@ class FSEntryFilteredDirsValueDescriptor(FSEntryRuntimeAttributeDescriptor):
             # filtering
             if instance.filter_dirs:
                 for dname in value:
+                    full_dname = os.path.join(instance.rpath, dname)
+                    is_passed = False
                     if instance.file_type == FSMediaEntryGroupType.ANY and instance.passed_filters(dname):
+                        if instance.passed_git_filters(full_dname, is_dir=True, strictly_target=True):
+                            is_passed = True
+                    
+                    if is_passed:
                         passed_dnames.append(dname)
                     elif instance.scan_for_enclosing_directories:
                         en_dname = os.path.join(instance.rpath, dname)                        
@@ -83,6 +95,8 @@ class FSEntryFilteredDirsValueDescriptor(FSEntryRuntimeAttributeDescriptor):
             # sorting
             if instance.by_size:
                dirs_sort_key = lambda dname: FSH.dir_size(os.path.join(instance.rpath, dname))
+            elif instance.by_date:
+               dirs_sort_key = lambda dname: os.path.getmtime(os.path.join(instance.rpath, dname))
             else:
                dirs_sort_key = lambda dname: dname.lower()
             passed_dnames.sort(key = dirs_sort_key, reverse = instance.descending)
@@ -171,7 +185,21 @@ class FSEntryParamsBase():
         self.git = args.get('git', False)
         self.git_only = args.get('git_only', False)
         self.git_tracked = args.get('git_tracked', False)
-        if self.git_only or self.git_tracked:
+        self.not_git_tracked = args.get('not_git_tracked', False)
+        self.git_ignored = args.get('git_ignored', False)
+        
+        self.git_statuses = {}
+        self.git_tracked_files = set()
+        self.git_tracked_dirs = set()
+        self.not_git_tracked_files = set()
+        self.not_git_tracked_dirs = set()
+        self.strictly_not_git_tracked_dirs = set()
+        self.git_ignored_files = set()
+        self.git_ignored_dirs = set()
+        self.strictly_git_ignored_dirs = set()
+        self._git_initialized = False
+
+        if self.git_only or self.git_tracked or self.not_git_tracked or self.git_ignored:
             self.git = True
         self.color = args.get('color', 1)
 
@@ -194,6 +222,8 @@ class FSEntryParamsBase():
                             break # no need to check this root further
                     for file_name in files:
                         if self.passed_filters(file_name) and self.is_of_required_type(os.path.join(rpath,file_name)):
+                            if self.git and not self.passed_git_filters(os.path.join(rpath,file_name), is_dir=False):
+                                continue
                             if not marked_enclosing:
                                 self._enclosing_dnames[rpath] = rpath
                             self._enclosing_files_containters.add(rpath)
@@ -201,6 +231,126 @@ class FSEntryParamsBase():
             #print(self.file_type)
             #print('Enclosing: {}'.format(self._enclosing_dnames))
             #print('Enclosing File Containers: {}'.format(self._enclosing_files_containters))
+
+    def _init_git(self):
+        if self._git_initialized:
+            return
+        self._git_initialized = True
+
+        if not self.git:
+            return
+
+        import subprocess
+        try:
+            res = subprocess.run(['git', '-C', self.src_dir, 'rev-parse', '--show-toplevel'], capture_output=True, text=True)
+            if res.returncode == 0:
+                git_root = res.stdout.strip()
+                if self.git or self.git_only:
+                    res_status = subprocess.run(['git', '-C', self.src_dir, 'status', '--porcelain'], capture_output=True, text=True)
+                    for line in res_status.stdout.splitlines():
+                        if len(line) > 3:
+                            status_code = line[:2]
+                            rel_path = line[3:].strip('"')
+                            full_path = os.path.normpath(os.path.join(git_root, rel_path)).lower()
+                            self.git_statuses[full_path] = status_code
+
+                if self.git_tracked:
+                    res_tracked = subprocess.run(['git', '-C', self.src_dir, 'ls-files', '--full-name'], capture_output=True, text=True)
+                    for line in res_tracked.stdout.splitlines():
+                        if line:
+                            rel_path = line.strip('"')
+                            full_path = os.path.normpath(os.path.join(git_root, rel_path)).lower()
+                            self.git_tracked_files.add(full_path)
+                            parent_dir = os.path.dirname(full_path)
+                            while parent_dir and parent_dir != os.path.normpath(git_root).lower() and parent_dir != '/':
+                                self.git_tracked_dirs.add(parent_dir)
+                                parent_dir = os.path.dirname(parent_dir)
+
+                if self.not_git_tracked:
+                    res_untracked = subprocess.run(['git', '-C', self.src_dir, 'ls-files', '--others', '--exclude-standard', '--full-name'], capture_output=True, text=True)
+                    for line in res_untracked.stdout.splitlines():
+                        if line:
+                            rel_path = line.strip('"')
+                            full_path = os.path.normpath(os.path.join(git_root, rel_path)).lower()
+                            self.not_git_tracked_files.add(full_path)
+                            parent_dir = os.path.dirname(full_path)
+                            while parent_dir and parent_dir != os.path.normpath(git_root).lower() and parent_dir != '/':
+                                self.not_git_tracked_dirs.add(parent_dir)
+                                parent_dir = os.path.dirname(parent_dir)
+                    
+                    res_untracked_dirs = subprocess.run(['git', '-C', self.src_dir, 'ls-files', '--others', '--exclude-standard', '--directory', '--full-name'], capture_output=True, text=True)
+                    for line in res_untracked_dirs.stdout.splitlines():
+                        if line and line.endswith('/'):
+                            rel_path = line.strip('"/')
+                            full_path = os.path.normpath(os.path.join(git_root, rel_path)).lower()
+                            self.strictly_not_git_tracked_dirs.add(full_path)
+
+
+                if self.git_ignored:
+                    res_ignored = subprocess.run(['git', '-C', self.src_dir, 'ls-files', '--others', '--ignored', '--exclude-standard', '--full-name'], capture_output=True, text=True)
+                    for line in res_ignored.stdout.splitlines():
+                        if line:
+                            rel_path = line.strip('"')
+                            full_path = os.path.normpath(os.path.join(git_root, rel_path)).lower()
+                            self.git_ignored_files.add(full_path)
+                            parent_dir = os.path.dirname(full_path)
+                            while parent_dir and parent_dir != os.path.normpath(git_root).lower() and parent_dir != '/':
+                                self.git_ignored_dirs.add(parent_dir)
+                                parent_dir = os.path.dirname(parent_dir)
+
+                    res_ignored_dirs = subprocess.run(['git', '-C', self.src_dir, 'ls-files', '--others', '--ignored', '--exclude-standard', '--directory', '--full-name'], capture_output=True, text=True)
+                    for line in res_ignored_dirs.stdout.splitlines():
+                        if line and line.endswith('/'):
+                            rel_path = line.strip('"/')
+                            full_path = os.path.normpath(os.path.join(git_root, rel_path)).lower()
+                            self.strictly_git_ignored_dirs.add(full_path)
+
+            else:
+                if self.git_only or self.git_tracked or self.not_git_tracked or self.git_ignored:
+                    print('Warning: Not a git repository')
+
+        except Exception:
+            if self.git_only or self.git_tracked or self.not_git_tracked or self.git_ignored:
+                print('Warning: Not a git repository')
+
+    def passed_git_filters(self, full_path, is_dir=False, strictly_target=False):
+        self._init_git()
+        if not self.git:
+            return True
+        full_path_lower = os.path.normpath(full_path).lower()
+        if self.git_only and not is_dir:
+            if full_path_lower not in self.git_statuses:
+                return False
+        if self.git_tracked:
+            if is_dir:
+                if full_path_lower not in self.git_tracked_dirs:
+                    return False
+            else:
+                if full_path_lower not in self.git_tracked_files:
+                    return False
+        if self.not_git_tracked:
+            if is_dir:
+                if strictly_target:
+                    if full_path_lower not in self.strictly_not_git_tracked_dirs:
+                        return False
+                else:
+                    if full_path_lower not in self.not_git_tracked_dirs:
+                        return False
+            else:
+                if full_path_lower not in self.not_git_tracked_files:
+                    return False
+        if self.git_ignored:
+            if is_dir:
+                if strictly_target:
+                    if full_path_lower not in self.strictly_git_ignored_dirs:
+                        return False
+                else:
+                    if full_path_lower not in self.git_ignored_dirs:
+                        return False
+            else:
+                if full_path_lower not in self.git_ignored_files:
+                    return False
+        return True
 
     # Current level
     @property
@@ -215,6 +365,10 @@ class FSEntryParamsBase():
     @property
     def by_size(self):
         return True if self.sort.startswith('s') else False
+
+    @property
+    def by_date(self):
+        return True if self.sort.startswith('d') else False
 
     # Filtering
     @property
@@ -281,7 +435,7 @@ class FSEntryParamsBase():
 
     @property
     def scan_for_enclosing_directories(self):
-        return self. filter_dirs and (self.file_type != FSMediaEntryGroupType.ANY or self.include != FSEntryDefaults.DEFAULT_INCLUDE) and self.end_level > 0    
+        return self.filter_dirs and (self.file_type != FSMediaEntryGroupType.ANY or self.include != FSEntryDefaults.DEFAULT_INCLUDE or getattr(self, 'git_ignored', False) or getattr(self, 'git_tracked', False) or getattr(self, 'not_git_tracked', False) or getattr(self, 'git_only', False)) and self.end_level > 0    
 
     @property
     def skip_iteration(self):   
@@ -310,7 +464,9 @@ class FSEntryParamsBase():
     @property
     def isMatchingDirEntry(self):
         dir_name = os.path.basename(self.rpath)
-        return self.file_type == FSMediaEntryGroupType.ANY and self.passed_filters(dir_name)
+        if not (self.file_type == FSMediaEntryGroupType.ANY and self.passed_filters(dir_name)):
+            return False
+        return self.passed_git_filters(self.rpath, is_dir=True, strictly_target=True)
     
     @property
     def isEnclosingFilesContainterEntry(self):
