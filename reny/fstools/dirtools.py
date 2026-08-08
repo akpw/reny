@@ -330,9 +330,7 @@ class DHandler:
             # print summary
             if not ff_entry_params.quiet:
                 print('Flattened: {0} files, {1} folders'.format(flattened_files_cnt, flattened_dirs_cnt))
-
-        if not ff_entry_params.quiet:
-            print('\nDone')
+                print('\nDone')
 
     @staticmethod
     def rename_entries(fs_entry_params,
@@ -457,9 +455,7 @@ class DHandler:
 
             if not fs_entry_params.quiet:
                 print(f'Organized: {moved_files_cnt} files')
-
-        if not fs_entry_params.quiet:
-            print('\nDone')
+                print('\nDone')
     
     @staticmethod
     def print_organized_view(fs_entry_params):
