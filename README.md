@@ -6,7 +6,7 @@ text/dates) and advanced operations like multi-level indexing and folder flatten
 default, Reny safely visualizes all targeted changes and requires confirmation before
 modifying the filesystem.
 
-![demo](https://github.com/user-attachments/assets/46e6d3b1-11d7-458f-bec2-77e9a3659640)
+![demo](https://github.com/user-attachments/assets/5a69f2d7-839b-4707-8b29-054dbca915d8)
 
 ## Background
 `reny` was originally created as the `renamer` component inside the larger [`batchmp`](https://github.com/akpw/batch-mp-tools) suite. It was spun off to provide a pure-filesystem organizing tool without media dependencies. 
