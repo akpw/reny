@@ -58,3 +58,52 @@ def test_git_ignored_filters_directories():
     # Test passed_git_filters for files
     assert params.passed_git_filters('/mock/repo/root/mixed_dir/ignored_file.txt', is_dir=False)
 
+
+def test_git_status_propagation_to_parents():
+    args = {
+        'dir': '.',
+        'git': True,
+        'git_only': True,
+        'end_level': 100,
+        'include_dirs': True,
+        'all_dirs': True,
+        'all_files': True
+    }
+    params = FSEntryParamsBase(args)
+
+    def mock_subprocess_run(cmd, *args, **kwargs):
+        mock = MagicMock()
+        mock.returncode = 0
+        if 'rev-parse' in cmd:
+            mock.stdout = '/mock/repo/root\n'
+        elif 'status' in cmd:
+            mock.stdout = ' M sub/nested/file.txt\n R old.txt -> new_sub/renamed.txt\n'
+        else:
+            mock.stdout = ''
+        return mock
+
+    with patch('subprocess.run', side_effect=mock_subprocess_run):
+        params._init_git()
+
+    # Leaf files
+    assert params.git_statuses.get('/mock/repo/root/sub/nested/file.txt') == ' M'
+    assert params.git_statuses.get('/mock/repo/root/new_sub/renamed.txt') == ' R'
+
+    # Parent directories bubbled up with '* '
+    assert params.git_statuses.get('/mock/repo/root/sub/nested') == '* '
+    assert params.git_statuses.get('/mock/repo/root/sub') == '* '
+    assert params.git_statuses.get('/mock/repo/root/new_sub') == '* '
+
+    # Git root itself should not have '* '
+    assert params.git_statuses.get('/mock/repo/root') is None
+
+    # git_only filters: files and enclosing parent directories pass
+    assert params.passed_git_filters('/mock/repo/root/sub/nested/file.txt', is_dir=False)
+    assert params.passed_git_filters('/mock/repo/root/sub/nested', is_dir=True)
+    assert params.passed_git_filters('/mock/repo/root/sub', is_dir=True)
+
+    # Unrelated directory does not pass git_only
+    assert not params.passed_git_filters('/mock/repo/root/unrelated_dir', is_dir=True)
+    assert not params.passed_git_filters('/mock/repo/root/unrelated_dir/file.txt', is_dir=False)
+
+

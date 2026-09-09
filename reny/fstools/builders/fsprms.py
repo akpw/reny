@@ -217,6 +217,8 @@ class FSEntryParamsBase():
                     marked_enclosing = False
                     for dir_name in dirs:
                         if self.file_type == FSMediaEntryGroupType.ANY and self.passed_filters(dir_name):
+                            if self.git and not self.passed_git_filters(os.path.join(rpath, dir_name), is_dir=True):
+                                continue
                             self._enclosing_dnames[rpath] = rpath
                             marked_enclosing = True
                             break # no need to check this root further
@@ -251,8 +253,17 @@ class FSEntryParamsBase():
                         if len(line) > 3:
                             status_code = line[:2]
                             rel_path = line[3:].strip('"')
+                            if ' -> ' in rel_path:
+                                rel_path = rel_path.split(' -> ')[-1].strip('"')
                             full_path = os.path.normpath(os.path.join(git_root, rel_path)).lower()
                             self.git_statuses[full_path] = status_code
+                            
+                            # Propagate status to parent directories
+                            parent_dir = os.path.dirname(full_path)
+                            while parent_dir and parent_dir != os.path.normpath(git_root).lower() and parent_dir != '/':
+                                if parent_dir not in self.git_statuses:
+                                    self.git_statuses[parent_dir] = '* '
+                                parent_dir = os.path.dirname(parent_dir)
 
                 if self.git_tracked:
                     res_tracked = subprocess.run(['git', '-C', self.src_dir, 'ls-files', '--full-name'], capture_output=True, text=True)
@@ -318,7 +329,7 @@ class FSEntryParamsBase():
         if not self.git:
             return True
         full_path_lower = os.path.normpath(full_path).lower()
-        if self.git_only and not is_dir:
+        if self.git_only:
             if full_path_lower not in self.git_statuses:
                 return False
         if self.git_tracked:
