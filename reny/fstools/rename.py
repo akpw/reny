@@ -11,332 +11,201 @@
 ## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ## GNU General Public License for more details.
 
-
-import os, re, datetime, string
-from collections import namedtuple
-from string import Template
+import os
 from reny.fstools.dirtools import DHandler
-from reny.fstools.fsutils import FSH
-from reny.fstools.builders.fsentry import FSEntry, FSEntryType, FSEntryDefaults
-from reny.fstools.builders.fsprms import FSEntryParamsBase
-from reny.commons.utils import MiscHelpers
+from reny.fstools.builders.fsentry import FSEntryType
+from reny.renamer.transforms import (
+    DirCounters,
+    build_index_transform,
+    build_pad_transform,
+    build_date_transform,
+    build_add_text_transform,
+    build_remove_n_chars_transform,
+    build_capitalize_transform,
+    build_replace_transform,
+    expand_templates,
+    substitute_dictionary,
+)
 
-
-
-# DirEntry Counters helper
-class DirCounters:
-    def __init__(self, dirs_cnt = 0, files_cnt = 0, num_files = 0, num_dirs = 0):
-        self.dirs_cnt = dirs_cnt
-        self.files_cnt = files_cnt
-        self.num_files = num_files
-        self.num_dirs = num_dirs
-
-    @staticmethod
-    def num_digits(number, min_digits):
-        return max(MiscHelpers.int_num_digits(number), min_digits)
 
 class Renamer:
-    ''' Renames FS entries
-    '''
+    """Renames FS entries applying pluggable transformations."""
+
     @classmethod
-    def add_index(cls, fs_entry_params, 
-                        as_prefix = False, join_str = '_',
-                        start_from = 1, min_digits = 1,
-                        sequential = False, by_directory = False):
-        ''' adds indexing
-            automatically figures out right number of min_digits
-        '''
-        try:
-            start_from = abs(int(start_from))
-        except ValueError:
-            start_from = 1
-
-        counters = {fs_entry_params.src_dir : DirCounters(start_from, start_from, 0, 0)}
-        total_files = total_dirs = 0      
-
-        if (sequential or by_directory):                
+    def add_index(
+        cls,
+        fs_entry_params,
+        as_prefix: bool = False,
+        join_str: str = '_',
+        start_from: int = 1,
+        min_digits: int = 1,
+        sequential: bool = False,
+        by_directory: bool = False,
+    ):
+        """Adds indexing, automatically calculating appropriate digit padding."""
+        total_files = total_dirs = 0
+        if sequential or by_directory:
             total_files, total_dirs, _ = DHandler.dir_stats(fs_entry_params)
-            cnt_key = fs_entry_params.src_dir # one key to rule them all here
 
-            def index_sequential(entry):
-                nonlocal counters
-                addition = None
+        add_index_transform = build_index_transform(
+            fs_entry_params,
+            total_files=total_files,
+            total_dirs=total_dirs,
+            as_prefix=as_prefix,
+            join_str=join_str,
+            start_from=start_from,
+            min_digits=min_digits,
+            sequential=sequential,
+            by_directory=by_directory,
+        )
 
-                if entry.type == FSEntryType.DIR:        
-                    if fs_entry_params.include_dirs:
-                        addition = str(counters[cnt_key].dirs_cnt).zfill(DirCounters.num_digits(total_dirs, min_digits))
-                    # update the dirs counter
-                    if fs_entry_params.include_dirs or by_directory:
-                        counters[cnt_key].dirs_cnt += 1
-
-                elif entry.type == FSEntryType.FILE:
-                    if by_directory:
-                        # indexing via adding respective directory counter
-                        fcnt = counters[cnt_key].dirs_cnt - 1
-                        if fcnt >= 0:
-                            addition = str(fcnt).zfill(DirCounters.num_digits(total_files, min_digits))
-                    else:
-                        addition = str(counters[cnt_key].files_cnt).zfill(DirCounters.num_digits(total_files, min_digits))
-                        # need to update the files counter
-                        counters[cnt_key].files_cnt += 1
-
-                return addition
+        if fs_entry_params.quiet:
+            proceed = True
         else:
-            # multilevel indexing
-            def index_multilevel(entry):
-                nonlocal counters, total_files, total_dirs
-                addition = None
+            proceed, _, _ = DHandler.visualise_changes(fs_entry_params, formatter=add_index_transform)
 
-                if entry.scopeSwitchingEntry:
-                    counters[entry.realpath] = DirCounters(start_from, start_from, 
-                                                    len(fs_entry_params.fnames), len(fs_entry_params.dnames.passed))
-
-                cnt = counters[os.path.dirname(entry.realpath)]
-                if entry.type == FSEntryType.DIR and fs_entry_params.include_dirs:
-                    addition = str(cnt.dirs_cnt).zfill(DirCounters.num_digits(cnt.num_dirs, min_digits))
-                    cnt.dirs_cnt += 1
-                    total_dirs += 1
-
-                elif entry.type == FSEntryType.FILE:
-                    addition = str(cnt.files_cnt).zfill(DirCounters.num_digits(cnt.num_files, min_digits))
-                    cnt.files_cnt += 1
-                    total_files += 1
-
-                return addition
-
-        # set the index function
-        index_function = index_sequential if (sequential or by_directory) else index_multilevel
-        def add_index_transform(entry):
-            addition = None
-
-            # src dir
-            if entry.type == FSEntryType.ROOT:
-                pass
-            # dirs
-            elif entry.type == FSEntryType.DIR:
-                addition = index_function(entry)
-            # files
-            elif entry.type == FSEntryType.FILE:
-                if fs_entry_params.include_files:
-                    addition = index_function(entry)
-
-            if addition is None:
-                return entry.basename
-            if as_prefix:
-                return join_str.join((addition, entry.basename))
-            else:
-                name_base, name_ext = os.path.splitext(entry.basename)
-                return '{0}{1}{2}{3}'.format(name_base, join_str, addition, name_ext)
-
-        # visualise changes and proceed if confirmed
-        if fs_entry_params.quiet:
-            proceed = True
-        else: 
-            proceed, _, _ = DHandler.visualise_changes(fs_entry_params, formatter = add_index_transform)
-        
         if proceed:
-            counters = {fs_entry_params.src_dir : DirCounters(start_from, start_from, 0, 0)}
             if (total_dirs + total_files) == 0:
                 total_files, total_dirs, _ = DHandler.dir_stats(fs_entry_params)
-            DHandler.rename_entries(fs_entry_params, total_files + total_dirs, formatter = add_index_transform)
+            exec_transform = build_index_transform(
+                fs_entry_params,
+                total_files=total_files,
+                total_dirs=total_dirs,
+                as_prefix=as_prefix,
+                join_str=join_str,
+                start_from=start_from,
+                min_digits=min_digits,
+                sequential=sequential,
+                by_directory=by_directory,
+            )
+            DHandler.rename_entries(fs_entry_params, total_files + total_dirs, formatter=exec_transform)
 
     @classmethod
-    def pad(cls, fs_entry_params, min_digits):
-        ''' pads numbers in files and directories names with leading zeros
-        '''
-        import re
-        def pad_transform(entry):
-            if entry.type == FSEntryType.ROOT:
-                return entry.basename
-            if entry.type == FSEntryType.DIR and not fs_entry_params.include_dirs:
-                return entry.basename
-            if entry.type == FSEntryType.FILE and not fs_entry_params.include_files:
-                return entry.basename
-            
-            def pad_match(m):
-                return m.group(0).zfill(min_digits)
-            return re.sub(r'\d+', pad_match, entry.basename, count=1)
+    def pad(cls, fs_entry_params, min_digits: int):
+        """Pads numbers in file and directory names with leading zeros."""
+        pad_transform = build_pad_transform(
+            min_digits,
+            include_dirs=fs_entry_params.include_dirs,
+            include_files=fs_entry_params.include_files,
+        )
 
-        # visualise changes and proceed if confirmed
         if fs_entry_params.quiet:
             proceed = True
             total_files, total_dirs, _ = DHandler.dir_stats(fs_entry_params)
-        else: 
-            proceed, total_files, total_dirs = DHandler.visualise_changes(fs_entry_params, formatter = pad_transform)
+        else:
+            proceed, total_files, total_dirs = DHandler.visualise_changes(fs_entry_params, formatter=pad_transform)
 
         if proceed:
             if (total_dirs + total_files) == 0:
                 total_files, total_dirs, _ = DHandler.dir_stats(fs_entry_params)
-            DHandler.rename_entries(fs_entry_params, total_files + total_dirs, formatter = pad_transform)
+            DHandler.rename_entries(fs_entry_params, total_files + total_dirs, formatter=pad_transform)
 
     @classmethod
     def capitalize(cls, fs_entry_params):
-        ''' capitalizes names of FS entries
-        '''
+        """Capitalizes names of FS entries."""
+        capitalize_transform = build_capitalize_transform(
+            include_dirs=fs_entry_params.include_dirs,
+            include_files=fs_entry_params.include_files,
+        )
 
-        def capitalize_transform(entry):
-            if entry.type == FSEntryType.ROOT:
-                return entry.basename
-            if entry.type == FSEntryType.DIR and not fs_entry_params.include_dirs:
-                return entry.basename
-            if entry.type == FSEntryType.FILE and not fs_entry_params.include_files:
-                return entry.basename
-            return string.capwords(entry.basename)
-
-        # visualise changes and proceed if confirmed
         if fs_entry_params.quiet:
             proceed = True
             total_files, total_dirs, _ = DHandler.dir_stats(fs_entry_params)
-        else: 
-            proceed, total_files, total_dirs = DHandler.visualise_changes(fs_entry_params, formatter = capitalize_transform)
+        else:
+            proceed, total_files, total_dirs = DHandler.visualise_changes(fs_entry_params, formatter=capitalize_transform)
 
         if proceed:
-            DHandler.rename_entries(fs_entry_params, total_files + total_dirs, formatter = capitalize_transform, check_unique = False)
-
+            DHandler.rename_entries(
+                fs_entry_params, total_files + total_dirs,
+                formatter=capitalize_transform, check_unique=False
+            )
 
     @classmethod
-    def add_date(cls, fs_entry_params, as_prefix = False, join_str = '_', format = '%Y-%m-%d'):
-        ''' adds current date
-        '''
-        addition = datetime.datetime.now().strftime(format)
-        join_str = str(join_str)
+    def add_date(cls, fs_entry_params, as_prefix: bool = False, join_str: str = '_', format: str = '%Y-%m-%d'):
+        """Adds current date prefix or suffix to entry names."""
+        add_date_transform = build_date_transform(
+            as_prefix=as_prefix,
+            join_str=join_str,
+            date_format=format,
+            include_dirs=fs_entry_params.include_dirs,
+            include_files=fs_entry_params.include_files,
+        )
 
-        def add_date_transform(entry):
-            if entry.type == FSEntryType.ROOT:
-                return entry.basename
-            if entry.type == FSEntryType.DIR and not fs_entry_params.include_dirs:
-                return entry.basename
-            if entry.type == FSEntryType.FILE and not fs_entry_params.include_files:
-                return entry.basename
-
-            if as_prefix:
-                return join_str.join((addition, entry.basename))
-            else:
-                name_base, name_ext = os.path.splitext(entry.basename)
-                return '{0}{1}{2}{3}'.format(name_base, join_str, addition, name_ext)
-
-        # visualise changes and proceed if confirmed
         if fs_entry_params.quiet:
             proceed = True
             total_files, total_dirs, _ = DHandler.dir_stats(fs_entry_params)
-        else: 
-            proceed, total_files, total_dirs = DHandler.visualise_changes(fs_entry_params, formatter = add_date_transform)
+        else:
+            proceed, total_files, total_dirs = DHandler.visualise_changes(fs_entry_params, formatter=add_date_transform)
 
         if proceed:
-            DHandler.rename_entries(fs_entry_params, total_files + total_dirs, formatter = add_date_transform)
+            DHandler.rename_entries(fs_entry_params, total_files + total_dirs, formatter=add_date_transform)
 
     @classmethod
-    def add_text(cls, fs_entry_params, text, as_prefix = False, join_str = ' '):
-        ''' adds text
-        '''
-        addition = text
-        join_str = str(join_str)
-
-        def add_text_transform(entry):
-            if entry.type == FSEntryType.ROOT:
-                return entry.basename
-            if entry.type == FSEntryType.DIR and not fs_entry_params.include_dirs:
-                return entry.basename
-            if entry.type == FSEntryType.FILE and not fs_entry_params.include_files:
-                return entry.basename
-
-            if as_prefix:
-                return join_str.join((addition, entry.basename))
-            else:
-                name_base, name_ext = os.path.splitext(entry.basename)
-                return '{0}{1}{2}{3}'.format(name_base, join_str, addition, name_ext)
+    def add_text(cls, fs_entry_params, text: str, as_prefix: bool = False, join_str: str = ' '):
+        """Adds arbitrary text as prefix or suffix."""
+        add_text_transform = build_add_text_transform(
+            text=text,
+            as_prefix=as_prefix,
+            join_str=join_str,
+            include_dirs=fs_entry_params.include_dirs,
+            include_files=fs_entry_params.include_files,
+        )
 
         if fs_entry_params.quiet:
             proceed = True
             total_files, total_dirs, _ = DHandler.dir_stats(fs_entry_params)
-        else: 
-            proceed, total_files, total_dirs = DHandler.visualise_changes(fs_entry_params, formatter = add_text_transform)
+        else:
+            proceed, total_files, total_dirs = DHandler.visualise_changes(fs_entry_params, formatter=add_text_transform)
 
         if proceed:
-            DHandler.rename_entries(fs_entry_params, total_files + total_dirs, formatter = add_text_transform)
+            DHandler.rename_entries(fs_entry_params, total_files + total_dirs, formatter=add_text_transform)
 
     @classmethod
-    def remove_n_characters(cls, fs_entry_params, num_chars = 0, from_head = True):
-        ''' removes n first characters
-        '''
-        num_chars = abs(num_chars)
+    def remove_n_characters(cls, fs_entry_params, num_chars: int = 0, from_head: bool = True):
+        """Removes n characters from entry name head or tail."""
+        remove_n_chars_transform = build_remove_n_chars_transform(
+            num_chars=num_chars,
+            from_head=from_head,
+            include_dirs=fs_entry_params.include_dirs,
+            include_files=fs_entry_params.include_files,
+        )
 
-        def remove_n_chars_transform(entry):
-            if entry.type == FSEntryType.ROOT:
-                return entry.basename
-            if entry.type == FSEntryType.DIR and not fs_entry_params.include_dirs:
-                return entry.basename
-            if entry.type == FSEntryType.FILE and not fs_entry_params.include_files:
-                return entry.basename
-
-            name_base, name_ext = os.path.splitext(entry.basename)
-            if from_head:
-                name_base = name_base[num_chars:]
-            else:
-                name_base = name_base[:-num_chars]
-            return ''.join((name_base, name_ext))
-
-        # visualise changes and proceed if confirmed
         if fs_entry_params.quiet:
             proceed = True
             total_files, total_dirs, _ = DHandler.dir_stats(fs_entry_params)
-        else: 
-            proceed, total_files, total_dirs = DHandler.visualise_changes(fs_entry_params, formatter = remove_n_chars_transform)
+        else:
+            proceed, total_files, total_dirs = DHandler.visualise_changes(fs_entry_params, formatter=remove_n_chars_transform)
 
         if proceed:
-            DHandler.rename_entries(fs_entry_params, total_files + total_dirs, formatter = remove_n_chars_transform)
+            DHandler.rename_entries(fs_entry_params, total_files + total_dirs, formatter=remove_n_chars_transform)
 
     @classmethod
-    def replace(cls, fs_entry_params, find_str, replace_str, case_insensitive=False, include_extension = False):
-        ''' Regexp-base replace
-        '''
-        flags = re.UNICODE
-        if case_insensitive:
-            flags = flags | re.IGNORECASE
-        p = re.compile(find_str, flags)
+    def replace(cls, fs_entry_params, find_str: str, replace_str: str, case_insensitive: bool = False, include_extension: bool = False):
+        """Regexp-based find and replace with template variable substitution."""
+        replace_transform = build_replace_transform(
+            find_str=find_str,
+            replace_str=replace_str,
+            case_insensitive=case_insensitive,
+            include_extension=include_extension,
+            include_dirs=fs_entry_params.include_dirs,
+            include_files=fs_entry_params.include_files,
+        )
 
-        def replace_transform(entry):
-            if entry.type == FSEntryType.ROOT:
-                return entry.basename
-            if entry.type == FSEntryType.DIR and not fs_entry_params.include_dirs:
-                return entry.basename
-            if entry.type == FSEntryType.FILE and not fs_entry_params.include_files:
-                return entry.basename
-
-            name_base, name_ext = os.path.splitext(entry.basename)
-            match = p.search(entry.basename if include_extension else name_base)
-            if match:
-                if replace_str is not None:
-                    # expand templates
-                    replace_str_expanded = cls._expand_templates(entry, replace_str)
-                    res = p.sub(replace_str_expanded, entry.basename if include_extension else name_base)
-                else:
-                    res = match.group()
-                return '{0}{1}'.format(res, '' if include_extension else name_ext)
-            else:
-                return entry.basename
-
-        # visualise changes and proceed if confirmed
         if fs_entry_params.quiet:
             proceed = True
             total_files, total_dirs, _ = DHandler.dir_stats(fs_entry_params)
-        else: 
-            proceed, total_files, total_dirs = DHandler.visualise_changes(fs_entry_params, formatter = replace_transform)
+        else:
+            proceed, total_files, total_dirs = DHandler.visualise_changes(fs_entry_params, formatter=replace_transform)
 
         if proceed:
-            DHandler.rename_entries(fs_entry_params, total_files + total_dirs, formatter = replace_transform)
+            DHandler.rename_entries(fs_entry_params, total_files + total_dirs, formatter=replace_transform)
 
     @classmethod
     def delete(cls, fs_entry_params):
-
-        ''' Deletes selected files
-            Support detection of non-media files
-        '''        
-
+        """Deletes selected entries."""
         if fs_entry_params.filter_dirs & fs_entry_params.include_dirs:
             fs_entry_params.filter_files = False
             fs_entry_params.include_files = True
-
 
         def delete_transform(entry):
             if entry.type == FSEntryType.ROOT:
@@ -345,58 +214,31 @@ class Renamer:
                 return None
             if entry.type == FSEntryType.FILE and not fs_entry_params.include_files:
                 return None
-
-            # these are to be gone soon...
             return entry.basename
 
         if fs_entry_params.quiet:
             proceed = True
-        else: 
-            proceed, _, _ = DHandler.visualise_changes(fs_entry_params, 
-                                    formatter = delete_transform, 
-                                    after_msg = 'The following files / folders will be deleted')
+        else:
+            proceed, _, _ = DHandler.visualise_changes(
+                fs_entry_params,
+                formatter=delete_transform,
+                after_msg='The following files / folders will be deleted'
+            )
 
         if proceed:
-            DHandler.remove_entries(fs_entry_params, formatter = delete_transform)
-
+            DHandler.remove_entries(fs_entry_params, formatter=delete_transform)
 
     @classmethod
     def organize(cls, fs_entry_params):
-
-        ''' Organizes files by selected attributes
-            Support detection of non-media files
-        '''        
+        """Organizes files by selected attributes."""
         print('to be organized')
 
-
+    @classmethod
+    def _expand_templates(cls, entry, value: str) -> str:
+        """Expands template values for backward compatibility."""
+        return expand_templates(entry, value)
 
     @classmethod
-    def _expand_templates(cls, entry, value):
-        ''' expands template values
-        '''
-        template = Template(value)
-        return template.safe_substitute(cls._substitute_dictionary(entry))
-
-    @classmethod
-    def _substitute_dictionary(cls, entry):
-        ''' internal template value substitution
-        '''
-        sd = {}
-        full_dir_name = os.path.dirname(entry.realpath)
-        sd['dirname'] = os.path.basename(full_dir_name)
-        sd['pardirname'] = os.path.basename(os.path.dirname(full_dir_name))
-
-        sd['adtime'] = datetime.datetime.fromtimestamp(os.path.getatime(entry.realpath))
-        sd['cdtime'] = datetime.datetime.fromtimestamp(os.path.getctime(entry.realpath))
-        sd['mdtime'] = datetime.datetime.fromtimestamp(os.path.getmtime(entry.realpath))
-
-        sd['atime'] = datetime.datetime.fromtimestamp(os.path.getatime(entry.realpath)).time()
-        sd['ctime'] = datetime.datetime.fromtimestamp(os.path.getctime(entry.realpath)).time()
-        sd['mtime'] = datetime.datetime.fromtimestamp(os.path.getmtime(entry.realpath)).time()
-
-        sd['adate'] = datetime.datetime.fromtimestamp(os.path.getatime(entry.realpath)).date()
-        sd['cdate'] = datetime.datetime.fromtimestamp(os.path.getctime(entry.realpath)).date()
-        sd['mdate'] = datetime.datetime.fromtimestamp(os.path.getmtime(entry.realpath)).date()
-
-        # media tags have been removed in this lightweight version
-        return sd
+    def _substitute_dictionary(cls, entry) -> dict:
+        """Internal template value substitution for backward compatibility."""
+        return substitute_dictionary(entry)

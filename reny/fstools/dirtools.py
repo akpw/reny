@@ -17,12 +17,14 @@ from collections import namedtuple
 from collections.abc import Iterable
 from reny.commons.utils import strtobool
 import pygtrie
-from reny.fstools.walker import DWalker
+from reny.core.walker import DirectoryWalker as DWalker
 from reny.fstools.fsutils import FSH
 from reny.fstools.builders.fsentry import FSEntry, FSEntryType, FSEntryDefaults
 from reny.fstools.builders.fsprms import FSEntryParamsExt, FSEntryParamsOrganize
 from reny.commons.progressbar import progress_bar, CmdProgressBarRefreshRate
 from reny.fstools.virtual_organizer import VirtualOrganizer
+from reny.view.styler import style_entry
+from reny.view.formatters import format_git_badge, format_size_badge, format_summary, format_total_size
 # from profilehooks import profile
 
 
@@ -64,26 +66,24 @@ class DHandler:
             if formatted_output:
                 git_indicator = ''
                 if getattr(fs_entry_params, 'git', False) and entry.type != FSEntryType.ROOT:
-                    # We can use the cached git_statuses from fs_entry_params
                     if hasattr(fs_entry_params, '_init_git') and not getattr(fs_entry_params, '_git_initialized', False):
                         fs_entry_params._init_git()
                     if getattr(fs_entry_params, '_git_initialized', False):
                         status = fs_entry_params.git_statuses.get(os.path.normpath(entry.realpath).lower())
-                        if status:
-                            git_indicator = f' [{status}]'
+                        git_indicator = format_git_badge(status)
 
                 size = ''
                 if entry.type == FSEntryType.FILE:
                     fcnt += 1
                     if fs_entry_params.show_size:
                         fsize = os.path.getsize(entry.realpath)
-                        size = ' {} '.format(FSH.fs_size(fsize))
+                        size = format_size_badge(fsize)
                         total_size += fsize
                 elif entry.type == FSEntryType.DIR and not entry.isEnclosingEntry:
                     dcnt += 1
                     if fs_entry_params.show_size:
                         display_size = FSH.dir_size(entry.realpath, shared_cache = shared_cache)
-                        size = ' {} '.format(FSH.fs_size(display_size))                        
+                        size = format_size_badge(display_size)
 
                         if FSH.level_from_root(fs_entry_params.src_dir, entry.realpath) <= fs_entry_params.end_level:
                             dsize = os.path.getsize(entry.realpath)
@@ -92,31 +92,18 @@ class DHandler:
 
                         total_size += dsize
 
-                if getattr(fs_entry_params, 'color', 1):
-                    if entry.type == FSEntryType.DIR:
-                        formatted_output = f'\033[1;34m{formatted_output}\033[0m'
-                    elif entry.type == FSEntryType.FILE:
-                        ext = os.path.splitext(entry.basename)[1].lower()
-                        if ext in ('.png', '.jpg', '.jpeg', '.gif', '.mp4', '.mkv', '.avi', '.mp3', '.wav'):
-                            formatted_output = f'\033[35m{formatted_output}\033[0m'
-                        elif ext in ('.pdf', '.doc', '.docx', '.xls', '.xlsx'):
-                            formatted_output = f'\033[32m{formatted_output}\033[0m'
-                        elif ext in ('.zip', '.tar', '.gz', '.7z'):
-                            formatted_output = f'\033[31m{formatted_output}\033[0m'
-                        elif ext in ('.txt', '.md', '.conf', '.ini', '.json', '.yaml', '.yml', '.csv', '.log', '.toml'):
-                            formatted_output = f'\033[33m{formatted_output}\033[0m' # yellow
-                        elif ext in ('.py', '.js', '.ts', '.html', '.css', '.c', '.cpp', '.go', '.rs', '.java', '.sh'):
-                            formatted_output = f'\033[36m{formatted_output}\033[0m' # cyan
+                formatted_output = style_entry(
+                    formatted_output, entry.type, filename=entry.basename,
+                    color_enabled=bool(getattr(fs_entry_params, 'color', 1))
+                )
 
                 print('{0}{1}{2}{3}'.format(entry.indent, size, formatted_output, git_indicator))
 
         # print summary
-        print('{0} {1}{2}, {3} folder{4}'.format(fcnt,
-                                                    selected_files_description, '' if fcnt == 1 else 's',
-                                                    dcnt, '' if dcnt == 1 else 's'))
+        print(format_summary(fcnt, dcnt, description=selected_files_description))
 
         if fs_entry_params.show_size and total_size > 0:
-                print('Total selected entries size: {}'.format(FSH.fs_size(total_size)))
+            print(format_total_size(total_size))
 
         return fcnt, dcnt
 
@@ -225,39 +212,8 @@ class DHandler:
                         remove_folders = True, remove_non_empty_folders = False):
         ''' Flattens all folders below target level, moving the files up at the target level
         '''
-        fs_preprocess_entry_params = FSEntryParamsExt()
-        fs_preprocess_entry_params.copy_params(ff_entry_params)
-
-        if ff_entry_params.quiet:
-            proceed = True
-        else: 
-            proceed, _, _ = DHandler.visualise_changes(ff_entry_params, fs_preprocess_entry_params = fs_preprocess_entry_params)
-        
-        if proceed:
-            # OK to go
-            flattened_dirs_cnt = flattened_files_cnt = 0
-            target_dir_path = ''
-            for entry in DWalker.entries(ff_entry_params):
-                if entry.type in (FSEntryType.DIR, FSEntryType.ROOT):
-                    if FSH.level_from_root(ff_entry_params.src_dir, entry.realpath) == ff_entry_params.target_level:
-                        target_dir_path = entry.realpath
-                else:
-                    # files                    
-                    if target_dir_path and (FSH.level_from_root(ff_entry_params.src_dir, entry.realpath) - 1 > ff_entry_params.target_level):
-                        target_fpath = os.path.join(target_dir_path, entry.basename)
-                        if FSH.move_FS_entry(entry.realpath, target_fpath):
-                            flattened_files_cnt += 1
-
-            # remove excessive folders
-            if ff_entry_params.remove_folders:
-                flattened_dirs_cnt = FSH.remove_folders_below_target_level(ff_entry_params.src_dir,
-                                                       target_level = ff_entry_params.target_level,
-                                                       empty_only = not ff_entry_params.remove_non_empty_folders,
-                                                       non_empty_msg = ff_entry_params.non_empty_folders_mgs)
-            # print summary
-            if not ff_entry_params.quiet:
-                print('Flattened: {0} files, {1} folders'.format(flattened_files_cnt, flattened_dirs_cnt))
-                print('\nDone')
+        from reny.structure.flatten import FolderFlattener
+        return FolderFlattener.flatten(ff_entry_params, remove_folders=remove_folders, remove_non_empty_folders=remove_non_empty_folders)
 
     @staticmethod
     def rename_entries(fs_entry_params,
@@ -344,68 +300,15 @@ class DHandler:
     def organize(fs_entry_params):
         """ Organizes files into subdirectories based on specified attributes
         """
+        from reny.structure.organize import DirectoryOrganizer
+        return DirectoryOrganizer.organize(fs_entry_params)
 
-        # Create and configure the virtual organizer
-        organizer = VirtualOrganizer(fs_entry_params)
-        
-        # Build the virtual structure
-        if not organizer.build_virtual_structure():
-            print("Nothing to process")
-            return
-        
-        # Get components for organize preview
-        virtual_walker = organizer.organize_virtual_walker()
-        max_depth = organizer.max_directory_depth()
-        preview_params = organizer.organize_preview_params(max_depth)
-        entries_to_process = list(DWalker.entries(fs_entry_params))
-        fcnt = sum(1 for entry in entries_to_process if entry.type == FSEntryType.FILE and hasattr(entry, 'target_path'))
-
-        # Visualize the changes
-        if fs_entry_params.quiet:
-            proceed = True
-        else:
-            proceed, _, _ = DHandler.visualise_changes(preview_params, virtual_walker, fs_preprocess_entry_params=fs_entry_params)
-
-        if proceed and fcnt > 0:
-            moved_files_cnt = 0
-            with progress_bar(refresh_rate=CmdProgressBarRefreshRate.FAST) as p_bar:
-                p_bar.info_msg = f'Organizing {fcnt} files'
-                for entry in entries_to_process:
-                    if entry.type == FSEntryType.FILE and hasattr(entry, 'target_path'):
-                        target_dir = os.path.dirname(entry.target_path)
-                        if not os.path.exists(target_dir):
-                            os.makedirs(target_dir)
-                        if FSH.move_FS_entry(entry.realpath, entry.target_path):
-                            moved_files_cnt += 1
-                    if fcnt > 0:
-                        p_bar.progress += 100 / fcnt
-
-            if not fs_entry_params.quiet:
-                print(f'Organized: {moved_files_cnt} files')
-                print('\nDone')
-    
     @staticmethod
     def print_organized_view(fs_entry_params):
         """ Print hierarchical organized-like virtual view
         """
-
-        # Create and configure the virtual organizer
-        organizer = VirtualOrganizer(fs_entry_params)
-        
-        # Build the virtual structure
-        if not organizer.build_virtual_structure():
-            print("No files to organize view")
-            return
-        
-        # Get components for virtual view
-        virtual_walker = organizer.print_virtual_walker()
-        size_formatter = organizer.print_formatter_with_sizes()
-        max_depth = organizer.max_directory_depth()
-        preview_params = organizer.print_preview_params(max_depth)
-        
-        # Print the virtual view
-        print(f"Virtual view by {fs_entry_params.by}:")
-        DHandler.print_dir(preview_params, virtual_walker, formatter=size_formatter)
+        from reny.structure.organize import DirectoryOrganizer
+        return DirectoryOrganizer.print_view(fs_entry_params)
 
 
 

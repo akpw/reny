@@ -18,6 +18,8 @@ from enum import IntEnum
 from abc import ABCMeta, abstractmethod
 from reny.fstools.fsutils import FSH
 from reny.core.git import GitStatusTracker
+from reny.core.sorter import sort_filenames, sort_dirnames
+from reny.core.filter import glob_match, passes_glob_patterns
 from reny.fstools.builders.fsb import FSEntryBuilderBase, FSEntryBuilderFlatten, FSEntryBuilderOrganizeWorker
 
 from reny.fstools.builders.fsentry import FSEntryDefaults, FSMediaEntryType, FSMediaEntryGroupType
@@ -56,13 +58,11 @@ class FSEntryFilteredFilesValueDescriptor(FSEntryRuntimeAttributeDescriptor):
                 fnames = [fname for fname in fnames if instance.is_of_required_type(os.path.join(instance.rpath, fname))]
 
             # sorting
-            if instance.by_size:
-                sort_key = lambda fname: os.path.getsize(os.path.join(instance.rpath, fname))
-            elif instance.by_date:
-                sort_key = lambda fname: os.path.getmtime(os.path.join(instance.rpath, fname))
-            else:
-                sort_key = lambda fname: fname.lower()
-            fnames.sort(key = sort_key, reverse = instance.descending)
+            fnames = sort_filenames(
+                fnames, instance.rpath,
+                by_size=instance.by_size, by_date=instance.by_date,
+                descending=instance.descending
+            )
             # set value
             super().__set__(instance, fnames)
         else:
@@ -94,14 +94,16 @@ class FSEntryFilteredDirsValueDescriptor(FSEntryRuntimeAttributeDescriptor):
             else:
                 passed_dnames = [dname for dname in value]
             # sorting
-            if instance.by_size:
-               dirs_sort_key = lambda dname: FSH.dir_size(os.path.join(instance.rpath, dname))
-            elif instance.by_date:
-               dirs_sort_key = lambda dname: os.path.getmtime(os.path.join(instance.rpath, dname))
-            else:
-               dirs_sort_key = lambda dname: dname.lower()
-            passed_dnames.sort(key = dirs_sort_key, reverse = instance.descending)
-            enclosing_dnames.sort(key = dirs_sort_key, reverse = instance.descending)
+            passed_dnames = sort_dirnames(
+                passed_dnames, instance.rpath,
+                by_size=instance.by_size, by_date=instance.by_date,
+                descending=instance.descending
+            )
+            enclosing_dnames = sort_dirnames(
+                enclosing_dnames, instance.rpath,
+                by_size=instance.by_size, by_date=instance.by_date,
+                descending=instance.descending
+            )
             super().__set__(instance, DNames(passed_dnames, enclosing_dnames))
         else:
             raise TypeError("Not a FSEntryParamsBase Type: {}".format(instance.__class__))
@@ -318,25 +320,15 @@ class FSEntryParamsBase():
     # Filtering
     @property
     def include_match(self):
-        def match(fsname):
-            for include_pattern in self.include.split(';'):
-                if fnmatch.fnmatch(fsname, include_pattern):
-                    return True
-            return False
-        return match
+        return lambda fsname: glob_match(fsname, self.include)
 
     @property
     def exclude_match(self):
-        def match(fsname):
-            for exclude_pattern in self.exclude.split(';'):
-                if fnmatch.fnmatch(fsname, exclude_pattern):
-                    return True
-            return False
-        return match
+        return lambda fsname: glob_match(fsname, self.exclude)
 
     @property
     def passed_filters(self):
-        return lambda fs_name: self.include_match(fs_name) and (not self.exclude_match(fs_name))
+        return lambda fs_name: passes_glob_patterns(fs_name, self.include, self.exclude)
 
     def is_of_entry_type(self, media_type):
         return {
@@ -487,7 +479,7 @@ class FSEntryParamsFlatten(FSEntryParamsExt):
     remove_folders = BooleanPropertyDescriptor()
     remove_non_empty_folders = BooleanPropertyDescriptor()
     unique_fnames = FunctionPropertyDescriptor()
-    non_empty_folders_mgs = PropertyDescriptor
+    non_empty_folders_mgs = PropertyDescriptor()
 
     def __init__(self, args = {}):
         super().__init__(args)

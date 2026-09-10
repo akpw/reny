@@ -14,7 +14,7 @@
 import os
 import pygtrie
 from collections import namedtuple
-from reny.fstools.walker import DWalker
+from reny.core.walker import DirectoryWalker as DWalker
 from reny.fstools.builders.fsentry import FSEntryType
 from reny.fstools.fsutils import FSH
 from reny.fstools.builders.fsprms import FSEntryParamsOrganize
