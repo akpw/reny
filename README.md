@@ -223,7 +223,7 @@ reny stats
 Overall directory statistics might take a while...
 /../_Dev/reny
   Total files: 4
-  Total directores: 17
+  Total directories: 17
   Total size: 22.4MB
 ```
 You can combine `stats` with any filter or recursion depth (e.g. `reny -el 2 -in '*.py' stats`).

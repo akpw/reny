@@ -75,6 +75,7 @@
 import sys
 from argparse import SUPPRESS
 from reny.cli.base.bmp_options import BatchMPArgParser, BatchMPHelpFormatter, BatchMPBaseCommands
+from reny.fstools.builders.fsentry import FSEntryDefaults
 
 
 class RenamerCommands(BatchMPBaseCommands):
@@ -230,7 +231,7 @@ class RenameArgParser(BatchMPArgParser):
                 default = 1)
         add_index_type_group = index_group.add_mutually_exclusive_group()
         add_index_type_group.add_argument('-sq', '--sequential', dest = 'sequential',
-                help = 'Index selected files sequentially across selected directores. ' \
+                help = 'Index selected files sequentially across selected directories. ' \
                        'If omitted, the files will instead be indexed within their respective directories (multi-level indexing)',
                 action = 'store_true')
         add_index_type_group.add_argument('-bd', '--by-directory', dest = 'by_directory',
@@ -293,7 +294,7 @@ class RenameArgParser(BatchMPArgParser):
                                                 formatter_class = BatchMPHelpFormatter)
         _add_include_mode_group(add_text_parser)
         text_group = add_text_parser.add_argument_group('Add Text Options')
-        text_group.add_argument('-ap', '--asprefix', dest = 'as_prefix',
+        text_group.add_argument('-ap', '--as-prefix', '--asprefix', dest = 'as_prefix',
                 help = 'Add text as a prefix to file names',
                 action = 'store_true')
         text_group.add_argument('-js', '--join-string', dest = 'join_str',
@@ -383,11 +384,11 @@ class RenameArgParser(BatchMPArgParser):
                                help='Organization strategy or virtual view by type or date',
                                type=str,
                                choices=['type', 'date'],
-                               required=True)
+                               default=SUPPRESS)
         org_group.add_argument('-df', '--date-format', dest='date_format',
                                help='Date format for subdirectories when using -b date (e.g., %%Y/%%m)',
                                type=str,
-                               default='%Y-%m-%d')
+                               default=SUPPRESS)
         org_group.add_argument('-td', '--target-dir', dest='target_dir',
                                help='Target directory to organize files into',
                                type=str)
@@ -415,7 +416,10 @@ class RenameArgParser(BatchMPArgParser):
         if ('-ni' in sys.argv or '--nested_indent' in sys.argv) and args['sub_cmd'] != RenamerCommands.PRINT:
             parser.error(f"argument -ni/--nested_indent is not supported for command '{args['sub_cmd']}'")
 
-        if ('-ft' in sys.argv or '--file-type' in sys.argv) and args['sub_cmd'] not in (RenamerCommands.PRINT, RenamerCommands.STATS):
+        if args['sub_cmd'] == RenamerCommands.REMOVE:
+            if '--file-type' in sys.argv or (args.get('file_type') and args.get('file_type') != FSEntryDefaults.DEFAULT_FILE_TYPE):
+                parser.error(f"argument -ft/--file-type is not supported for command '{args['sub_cmd']}'")
+        elif ('-ft' in sys.argv or '--file-type' in sys.argv) and args['sub_cmd'] not in (RenamerCommands.PRINT, RenamerCommands.STATS):
             parser.error(f"argument -ft/--file-type is not supported for command '{args['sub_cmd']}'")
 
         if args['sub_cmd'] == RenamerCommands.FLATTEN:

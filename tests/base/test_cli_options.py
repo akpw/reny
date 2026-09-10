@@ -79,3 +79,25 @@ class TestCLIOptions(unittest.TestCase):
         with patch.object(sys, 'argv', ['reny', '-ss', 'pad']):
             with self.assertRaises(SystemExit):
                 parser.parse_options()
+
+    def test_remove_from_tail_not_confused_with_file_type(self):
+        parser = RenameArgParser()
+        # -ft on remove means --from-tail and must be accepted
+        with patch.object(sys, 'argv', ['reny', 'remove', '-nc', '3', '-ft']):
+            args = parser.parse_options()
+        self.assertEqual(args['sub_cmd'], 'remove')
+        self.assertEqual(args['num_chars'], 3)
+        self.assertTrue(args['from_tail'])
+
+        # Explicit global --file-type on remove must still be rejected
+        with patch.object(sys, 'argv', ['reny', '-ft', 'image', 'remove', '-nc', '3']):
+            with self.assertRaises(SystemExit):
+                parser.parse_options()
+
+    def test_add_text_as_prefix_alias(self):
+        parser = RenameArgParser()
+        with patch.object(sys, 'argv', ['reny', 'add_text', '--as-prefix', '-tx', 'test_']):
+            args = parser.parse_options()
+        self.assertEqual(args['sub_cmd'], 'add_text')
+        self.assertTrue(args['as_prefix'])
+        self.assertEqual(args['text'], 'test_')

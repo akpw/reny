@@ -305,7 +305,7 @@ class BatchMPArgParser:
     @staticmethod
     def _add_arg_display_curent_state_mode(parser):
         parser.add_argument('-dc', '--display-current', dest = 'display_current',
-                help ='Unless in quiet mode, display current (pre-processing) state in the confirmation propmt',
+                help ='Unless in quiet mode, display current (pre-processing) state in the confirmation prompt',
                 action = 'store_true')
 
     @staticmethod
@@ -326,7 +326,7 @@ class BatchMPArgParser:
                     help="Color output (0 or 1, default 1)", 
                     type=int, choices=[0, 1], default=1)
         misc_group.add_argument('-ni', '--nested_indent', dest = 'nested_indent',
-                    help = "Indent for printing  nested directories",
+                    help = "Indent for printing nested directories",
                     type = str,
                     default = '  ')
 

@@ -115,9 +115,8 @@ class DHandler:
         total_files, total_dirs, total_size = DHandler.dir_stats(fs_entry_params)
         
         print('{0}Total files: {1}'.format(FSEntryDefaults.DEFAULT_NESTED_INDENT, total_files))
-        print('{0}Total directores: {1}'.format(FSEntryDefaults.DEFAULT_NESTED_INDENT, total_dirs))
-        if fs_entry_params.show_size: 
-            print('{0}Total size: {1}'.format(FSEntryDefaults.DEFAULT_NESTED_INDENT, FSH.fs_size(total_size)))
+        print('{0}Total directories: {1}'.format(FSEntryDefaults.DEFAULT_NESTED_INDENT, total_dirs))
+        print('{0}Total size: {1}'.format(FSEntryDefaults.DEFAULT_NESTED_INDENT, FSH.fs_size(total_size)))
 
     @staticmethod
     def dir_stats(fs_entry_params, 
