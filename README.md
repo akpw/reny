@@ -72,7 +72,7 @@ pipx install reny
 
 ## Usage & Examples
 
-### 1. Configuration File (`config.toml`)
+### Configuration File
 Since `reny` comes with many options, it supports setting default configurations via a TOML file to make organizing and using them much easier. 
 
 The global configuration file is located at `~/.config/reny/config.toml`, but you can also use a local `./.reny.toml` on a per-directory basis.
@@ -85,7 +85,7 @@ reny config --local    # Generates or opens ./.reny.toml in current directory
 
 Any options specified on the command line automatically override settings in the config file.
 
-### 2. Ignore File Management (`reny ignore`)
+### Ignore Files
 `reny` supports generating and managing ignore template files to exclude unwanted files or directories from operations:
 
 ```bash
@@ -93,7 +93,7 @@ reny ignore            # Generates or opens ./.renyignore in current directory
 reny ignore -gl        # Generates or opens ~/.renyignore globally
 ```
 
-### 3. Basic Visualization (No flags)
+### Directory Tree Visualization
 Print the current directory structure:
 ```bash
 reny
@@ -108,9 +108,8 @@ reny
 3 files, 2 folders
 ```
 
-
-### 4. Recursion Control (`-r`/`--recursive`, `-sl`/`--start-level`, `-el`/`--end-level`)
-Easily adjust how deep `reny` prints or operates. For example, to view files and directories exactly 1 level deep:
+### Recursion Depth
+Adjust how deep `reny` prints or operates using `-el` / `--end-level` and `-sl` / `--start-level`. For example, to view files and directories exactly 1 level deep:
 ```bash
 reny -el 1
 ```
@@ -130,8 +129,7 @@ reny -el 1
 3 files, 8 folders
 ```
 
-
-### 5. Filtering & Ignore Files (`-in`/`--include`, `-ex`/`--exclude`, `-ig`/`--ignore-file`)
+### Pattern & File Filtering
 By default, `reny` automatically excludes hidden files and directories (like `.git` and `.venv`). Additional filters can be set via `-in` / `-ex` parameters, or via a `.renyignore` file in the target directory or globally in `~/.renyignore`. `reny` also supports custom ignore files, like a standard `.gitignore`:
 ```bash
 reny -el 1 -ig .gitignore 
@@ -154,8 +152,7 @@ reny -el 1 -ig .gitignore
 5 files, 8 folders
 ```
 
-
-### 6. Virtual Views & Organization (`-b`/`--by`, `-ss`/`--show-size`, `-s`/`--sort`)
+### Virtual Views & Organization
 Preview how a chaotic downloads folder would look if organized by file type, sorted by size descending (you can also sort by date with `da`/`dd`), without actually moving anything:
 ```bash
 reny -b type -s sd -ss
@@ -175,14 +172,13 @@ Virtual view by type:
 5 files, 4 folders
 Total selected entries size: 1.6GB
 ```
-To actually commit this organization and move the files, simply use the `organize` command. As always, `reny` will show a preview and ask for confirmation before actually making any changes:
+To commit this organization and move files into subdirectories, use `organize`. `reny` will show a preview and ask for confirmation before making changes:
 ```bash
 reny organize -b type
 ```
 
-
-### 7. Git Integration (`-g`/`--git`, `-go`/`--git-only`, `-gt`/`--git-tracked`, `-ngt`/`--not-git-tracked`, `-gi`/`--git-ignored`)
-Visually inspect changes in a repository. `reny` automatically bubbles up file modifications to their parent directories.
+### Git Status Integration
+Visually inspect changes in a repository using `--git` (`-g`). `reny` automatically bubbles up file modifications to parent directories:
 ```bash
 reny -el 1 -ig .gitignore --git
 ```
@@ -216,11 +212,9 @@ reny -el 1 -ig .gitignore -go
 1 file, 2 folders
 ```
 
-Similarly, you can use the `--git-tracked` (or `-gt`) flag to filter the view so it exclusively shows files that are already tracked by Git, completely ignoring untracked files and directories.
+Similarly, `--git-tracked` (`-gt`) filters the view to show only tracked files, `--not-git-tracked` (`-ngt`) displays only untracked files, and `--git-ignored` (`-gi`) reveals all explicitly ignored files (bypassing `.renyignore`).
 
-Complementary to this, the `--not-git-tracked` (`-ngt`) flag displays only files that are currently untracked, and `--git-ignored` (`-gi`) reveals all explicitly ignored files (e.g., build artifacts, `__pycache__`, or `.DS_Store` hidden by `.gitignore`). Note that both `-ngt` and `-gi` bypass `reny`'s internal `.renyignore` to ensure you see the true, unvarnished state of your Git repository.
-
-### 8. Directory Statistics (`reny stats`)
+### Directory Statistics
 Quickly calculate total file count, directory count, and total disk usage across matching paths:
 ```bash
 reny stats
@@ -234,30 +228,28 @@ Overall directory statistics might take a while...
 ```
 You can combine `stats` with any filter or recursion depth (e.g. `reny -el 2 -in '*.py' stats`).
 
-### 9. Advanced Batch Renaming (Commands)
-When you are ready to modify your files, `reny` operates purely as a dry-run by default. It safely visualizes all targeted changes and asks for confirmation before any files are moved or renamed.
+### Batch Renaming Operations
+When modifying files, `reny` operates purely as a dry-run by default. It safely visualizes all targeted changes and asks for confirmation before any files are moved or renamed.
 
-`reny` supports a variety of targeted commands for bulk renaming:
-
-**Indexing (`index`, `-sq`/`--sequential`, `-bd`/`--by-directory`)**
+#### Numeric Indexing (`index`)
 
 Add an index to all `.txt` files recursively. By default, `reny` performs multi-level indexing (restarting the count inside each respective directory):
 ```bash
 reny -r -in '*.txt' index
 ```
-To index files continuously across all nested directories, use the `-sq` flag. Alternatively, use `-bd` to append the directory's index instead of the file's index:
+To index files continuously across all nested directories, use `-sq`. Alternatively, use `-bd` to append the directory's index instead of the file's index:
 ```bash
 reny -r -in '*.txt' index -sq
 ```
 
-**Zero-Padding (`pad`, `-md`/`--min-digits`)**
+#### Zero-Padding (`pad`)
 
 Pad existing numbers with leading zeros (e.g., `2.png` becomes `02.png`):
 ```bash
 reny pad -md 2
 ```
 
-**Adding Dates (`add_date`, `-ap`/`--as-prefix`, `-fm`/`--format`, `-js`/`--join-string`)**
+#### Date Timestamps (`add_date`)
 
 Add a formatted date timestamp to filenames as a prefix or suffix:
 ```bash
@@ -268,7 +260,7 @@ reny -in '*.jpg' add_date -ap -fm '%Y-%m-%d'
 reny -in '*.log' add_date -fm '%Y%m%d' -js '_'
 ```
 
-**Adding Text (`add_text`, `-ap`/`--asprefix`, `-tx`/`--text`, `-js`/`--join-string`)**
+#### Text Insertion (`add_text`)
 
 Add arbitrary text as a prefix or suffix:
 ```bash
@@ -276,7 +268,7 @@ Add arbitrary text as a prefix or suffix:
 reny -in '*.pdf' add_text -ap -tx 'archived'
 ```
 
-**Removing Characters (`remove`, `-nc`/`--num-chars`, `-ft`/`--from-tail`)**
+#### Character Removal (`remove`)
 
 Strip N characters from the beginning or end of filenames:
 ```bash
@@ -287,23 +279,23 @@ reny remove -nc 4
 reny remove -nc 3 -ft
 ```
 
-**Capitalize (`capitalize`)**
+#### Word Capitalization (`capitalize`)
 
 Automatically capitalize words in selected file and folder names:
 ```bash
 reny capitalize
 ```
 
-**Flattening (`flatten`, `-tl`/`--target-level`)**
+#### Folder Flattening (`flatten`)
 
 Safely collapse nested directory structures into a single folder (target level 1):
 ```bash
 reny flatten -tl 1
 ```
 
-**Delete (`delete`)**
+#### Batch Deletion (`delete`)
 
-Safely batch-delete files. When combined with filters, it can e.g. clean up a messy downloads folder or prepare a project for a clean build (e.g., deleting `dist`, `__pycache__`, and `.egg-info` directories). Paired with `-gi`, you can preview and instantly wipe all git-ignored files:
+Safely batch-delete files. When combined with filters, it can clean up temporary files or build artifacts. Paired with `-gi`, you can preview and wipe all git-ignored files:
 ```bash
 reny -gi -ex .venv delete -id
 ```
@@ -333,13 +325,13 @@ The following files / folders will be deleted
 Total selected entries size: 3.5MB
 ```
 
-**Regex Replace (`replace`, `-fs`/`--find-string`, `-rs`/`--replace-string`)**
+#### Regex Replace (`replace`)
 
 Change spaces to underscores in all filenames:
 ```bash
 reny replace -fs ' ' -rs '_'
 ```
-Manually pad single-digit filenames with a leading zero (an alternative to the `pad` command using capture groups):
+Manually pad single-digit filenames with a leading zero (using capture groups):
 ```bash
 reny replace -fs '^(\d)$' -rs '0\1'
 ```
