@@ -24,9 +24,12 @@ class BatchMPDispatcher:
         self.option_parser = BatchMPArgParser()
 
     # Dispatcher
-    def dispatch(self):
-        args = self.option_parser.parse_options()
+    def dispatch(self, args = None):
+        if args is None:
+            args = self.option_parser.parse_options()
+        return self.dispatch_base(args)
 
+    def dispatch_base(self, args):
         if args['sub_cmd'] == BatchMPBaseCommands.VERSION:
             self.print_version()
 
@@ -105,9 +108,12 @@ class BatchMPDispatcher:
         print(f"Successfully generated template at: {target_path}")
 
 def main():
-    ''' BatchMP entry point
+    ''' Reny base entry point
     '''
     BatchMPDispatcher().dispatch()
+
+# Modern Reny alias
+RenyDispatcher = BatchMPDispatcher
 
 if __name__ == '__main__':
     main()

@@ -60,13 +60,10 @@ class BatchMPArgParser:
     def __init__(self):
         self._script_name = 'Reny'
         self._description = '''
-    Reny provides management of files, directories, etc...
+    Reny provides filesystem visualization, batch renaming, and directory restructuring.
 
-    Reny tools consist of three main command-line utilities.
-    For more information, run:
-        $ renamer -h
-        $ tagger -h
-        $ bmfp -h
+    For more information on individual commands, run:
+        $ reny {command} -h
     '''
 
     @property
@@ -516,3 +513,10 @@ class BatchMPHelpFormatter(HelpFormatter):
                     parts.append('%s' % option_string)
                 parts[-1] += ' %s'%args_string
             return ', '.join(parts)
+
+
+# Modern Reny aliases
+RenyBaseCommands = BatchMPBaseCommands
+RenyArgParser = BatchMPArgParser
+RenyHelpFormatter = BatchMPHelpFormatter
+

@@ -83,3 +83,6 @@ class BMPTest(unittest.TestCase):
             if not quiet:
                 print('No restore needed')
 
+# Modern Reny alias
+RenyTest = BMPTest
+

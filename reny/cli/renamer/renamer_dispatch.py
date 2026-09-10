@@ -29,8 +29,8 @@ class RenameDispatcher(BatchMPDispatcher):
     def dispatch(self):
         ''' Dispatches Renamer commands
         '''
-        if not super().dispatch():
-            args = self.option_parser.parse_options()
+        args = self.option_parser.parse_options()
+        if not self.dispatch_base(args):
             if args['sub_cmd'] == RenamerCommands.PRINT:
                 self.print_dir(args)
 

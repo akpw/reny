@@ -17,12 +17,13 @@ import mimetypes
 from enum import IntEnum
 from abc import ABCMeta, abstractmethod
 from reny.fstools.fsutils import FSH
+from reny.core.git import GitStatusTracker
+from reny.fstools.builders.fsb import FSEntryBuilderBase, FSEntryBuilderFlatten, FSEntryBuilderOrganizeWorker
 
 from reny.fstools.builders.fsentry import FSEntryDefaults, FSMediaEntryType, FSMediaEntryGroupType
 from reny.commons.descriptors import (
          PropertyDescriptor,
          LazyFunctionPropertyDescriptor,
-         LazyClassPropertyDescriptor,
          FunctionPropertyDescriptor,
          BooleanPropertyDescriptor)
 
@@ -162,7 +163,7 @@ class FSEntryParamsBase():
     git_tracked = BooleanPropertyDescriptor()
     color = PropertyDescriptor()
 
-    fs_entry_builder = LazyClassPropertyDescriptor('reny.fstools.builders.fsb.FSEntryBuilderBase')
+    fs_entry_builder = FSEntryBuilderBase
     '''Runtime attrbutes
     '''
     rpath = FSEntryRPathDescriptor()
@@ -188,16 +189,7 @@ class FSEntryParamsBase():
         self.not_git_tracked = args.get('not_git_tracked', False)
         self.git_ignored = args.get('git_ignored', False)
         
-        self.git_statuses = {}
-        self.git_tracked_files = set()
-        self.git_tracked_dirs = set()
-        self.not_git_tracked_files = set()
-        self.not_git_tracked_dirs = set()
-        self.strictly_not_git_tracked_dirs = set()
-        self.git_ignored_files = set()
-        self.git_ignored_dirs = set()
-        self.strictly_git_ignored_dirs = set()
-        self._git_initialized = False
+        self._git_tracker = GitStatusTracker(self.src_dir)
 
         if self.git_only or self.git_tracked or self.not_git_tracked or self.git_ignored:
             self.git = True
@@ -234,134 +226,76 @@ class FSEntryParamsBase():
             #print('Enclosing: {}'.format(self._enclosing_dnames))
             #print('Enclosing File Containers: {}'.format(self._enclosing_files_containters))
 
+    @property
+    def git_statuses(self):
+        return self._git_tracker.git_statuses
+
+    @git_statuses.setter
+    def git_statuses(self, val):
+        self._git_tracker.git_statuses = val
+
+    @property
+    def git_tracked_files(self):
+        return self._git_tracker.git_tracked_files
+
+    @property
+    def git_tracked_dirs(self):
+        return self._git_tracker.git_tracked_dirs
+
+    @property
+    def not_git_tracked_files(self):
+        return self._git_tracker.not_git_tracked_files
+
+    @property
+    def not_git_tracked_dirs(self):
+        return self._git_tracker.not_git_tracked_dirs
+
+    @property
+    def strictly_not_git_tracked_dirs(self):
+        return self._git_tracker.strictly_not_git_tracked_dirs
+
+    @property
+    def git_ignored_files(self):
+        return self._git_tracker.git_ignored_files
+
+    @property
+    def git_ignored_dirs(self):
+        return self._git_tracker.git_ignored_dirs
+
+    @property
+    def strictly_git_ignored_dirs(self):
+        return self._git_tracker.strictly_git_ignored_dirs
+
+    @property
+    def _git_initialized(self):
+        return self._git_tracker._initialized
+
+    @_git_initialized.setter
+    def _git_initialized(self, val):
+        self._git_tracker._initialized = val
+
     def _init_git(self):
-        if self._git_initialized:
-            return
-        self._git_initialized = True
-
-        if not self.git:
-            return
-
-        import subprocess
-        try:
-            res = subprocess.run(['git', '-C', self.src_dir, 'rev-parse', '--show-toplevel'], capture_output=True, text=True)
-            if res.returncode == 0:
-                git_root = res.stdout.strip()
-                if self.git or self.git_only:
-                    res_status = subprocess.run(['git', '-C', self.src_dir, 'status', '--porcelain'], capture_output=True, text=True)
-                    for line in res_status.stdout.splitlines():
-                        if len(line) > 3:
-                            status_code = line[:2]
-                            rel_path = line[3:].strip('"')
-                            if ' -> ' in rel_path:
-                                rel_path = rel_path.split(' -> ')[-1].strip('"')
-                            full_path = os.path.normpath(os.path.join(git_root, rel_path)).lower()
-                            self.git_statuses[full_path] = status_code
-                            
-                            # Propagate status to parent directories
-                            parent_dir = os.path.dirname(full_path)
-                            while parent_dir and parent_dir != os.path.normpath(git_root).lower() and parent_dir != '/':
-                                if parent_dir not in self.git_statuses:
-                                    self.git_statuses[parent_dir] = '* '
-                                parent_dir = os.path.dirname(parent_dir)
-
-                if self.git_tracked:
-                    res_tracked = subprocess.run(['git', '-C', self.src_dir, 'ls-files', '--full-name'], capture_output=True, text=True)
-                    for line in res_tracked.stdout.splitlines():
-                        if line:
-                            rel_path = line.strip('"')
-                            full_path = os.path.normpath(os.path.join(git_root, rel_path)).lower()
-                            self.git_tracked_files.add(full_path)
-                            parent_dir = os.path.dirname(full_path)
-                            while parent_dir and parent_dir != os.path.normpath(git_root).lower() and parent_dir != '/':
-                                self.git_tracked_dirs.add(parent_dir)
-                                parent_dir = os.path.dirname(parent_dir)
-
-                if self.not_git_tracked:
-                    res_untracked = subprocess.run(['git', '-C', self.src_dir, 'ls-files', '--others', '--exclude-standard', '--full-name'], capture_output=True, text=True)
-                    for line in res_untracked.stdout.splitlines():
-                        if line:
-                            rel_path = line.strip('"')
-                            full_path = os.path.normpath(os.path.join(git_root, rel_path)).lower()
-                            self.not_git_tracked_files.add(full_path)
-                            parent_dir = os.path.dirname(full_path)
-                            while parent_dir and parent_dir != os.path.normpath(git_root).lower() and parent_dir != '/':
-                                self.not_git_tracked_dirs.add(parent_dir)
-                                parent_dir = os.path.dirname(parent_dir)
-                    
-                    res_untracked_dirs = subprocess.run(['git', '-C', self.src_dir, 'ls-files', '--others', '--exclude-standard', '--directory', '--full-name'], capture_output=True, text=True)
-                    for line in res_untracked_dirs.stdout.splitlines():
-                        if line and line.endswith('/'):
-                            rel_path = line.strip('"/')
-                            full_path = os.path.normpath(os.path.join(git_root, rel_path)).lower()
-                            self.strictly_not_git_tracked_dirs.add(full_path)
-
-
-                if self.git_ignored:
-                    res_ignored = subprocess.run(['git', '-C', self.src_dir, 'ls-files', '--others', '--ignored', '--exclude-standard', '--full-name'], capture_output=True, text=True)
-                    for line in res_ignored.stdout.splitlines():
-                        if line:
-                            rel_path = line.strip('"')
-                            full_path = os.path.normpath(os.path.join(git_root, rel_path)).lower()
-                            self.git_ignored_files.add(full_path)
-                            parent_dir = os.path.dirname(full_path)
-                            while parent_dir and parent_dir != os.path.normpath(git_root).lower() and parent_dir != '/':
-                                self.git_ignored_dirs.add(parent_dir)
-                                parent_dir = os.path.dirname(parent_dir)
-
-                    res_ignored_dirs = subprocess.run(['git', '-C', self.src_dir, 'ls-files', '--others', '--ignored', '--exclude-standard', '--directory', '--full-name'], capture_output=True, text=True)
-                    for line in res_ignored_dirs.stdout.splitlines():
-                        if line and line.endswith('/'):
-                            rel_path = line.strip('"/')
-                            full_path = os.path.normpath(os.path.join(git_root, rel_path)).lower()
-                            self.strictly_git_ignored_dirs.add(full_path)
-
-            else:
-                if self.git_only or self.git_tracked or self.not_git_tracked or self.git_ignored:
-                    print('Warning: Not a git repository')
-
-        except Exception:
-            if self.git_only or self.git_tracked or self.not_git_tracked or self.git_ignored:
-                print('Warning: Not a git repository')
+        self._git_tracker.init(
+            git=self.git,
+            git_only=self.git_only,
+            git_tracked=self.git_tracked,
+            not_git_tracked=self.not_git_tracked,
+            git_ignored=self.git_ignored
+        )
 
     def passed_git_filters(self, full_path, is_dir=False, strictly_target=False):
         self._init_git()
         if not self.git:
             return True
-        full_path_lower = os.path.normpath(full_path).lower()
-        if self.git_only:
-            if full_path_lower not in self.git_statuses:
-                return False
-        if self.git_tracked:
-            if is_dir:
-                if full_path_lower not in self.git_tracked_dirs:
-                    return False
-            else:
-                if full_path_lower not in self.git_tracked_files:
-                    return False
-        if self.not_git_tracked:
-            if is_dir:
-                if strictly_target:
-                    if full_path_lower not in self.strictly_not_git_tracked_dirs:
-                        return False
-                else:
-                    if full_path_lower not in self.not_git_tracked_dirs:
-                        return False
-            else:
-                if full_path_lower not in self.not_git_tracked_files:
-                    return False
-        if self.git_ignored:
-            if is_dir:
-                if strictly_target:
-                    if full_path_lower not in self.strictly_git_ignored_dirs:
-                        return False
-                else:
-                    if full_path_lower not in self.git_ignored_dirs:
-                        return False
-            else:
-                if full_path_lower not in self.git_ignored_files:
-                    return False
-        return True
+        return self._git_tracker.passed_filters(
+            full_path,
+            is_dir=is_dir,
+            strictly_target=strictly_target,
+            git_only=self.git_only,
+            git_tracked=self.git_tracked,
+            not_git_tracked=self.not_git_tracked,
+            git_ignored=self.git_ignored
+        )
 
     # Current level
     @property
@@ -493,7 +427,7 @@ class FSEntryParamsBase():
         '''
         for c in cls.__mro__:
             for field, descr in vars(c).items():
-                if isinstance(descr, LazyClassPropertyDescriptor):
+                if field == 'fs_entry_builder':
                     continue
                 if isinstance(descr, BooleanPropertyDescriptor):
                     yield field
@@ -511,6 +445,8 @@ class FSEntryParamsBase():
 
     # Copy attributes from another entry
     def copy_params(self, fs_entry_params):
+        self.src_dir = fs_entry_params.src_dir
+        self._git_tracker = fs_entry_params._git_tracker
         self._enclosing_dnames = fs_entry_params._enclosing_dnames
         self._enclosing_files_containters = fs_entry_params._enclosing_files_containters
         for field in self.writable_fields():
@@ -545,7 +481,7 @@ class FSEntryParamsExt(FSEntryParamsBase):
 class FSEntryParamsFlatten(FSEntryParamsExt):
     ''' Flatten Entry attributes
     '''
-    fs_entry_builder = LazyClassPropertyDescriptor('reny.fstools.builders.fsb.FSEntryBuilderFlatten')
+    fs_entry_builder = FSEntryBuilderFlatten
     
     target_level = PropertyDescriptor()
     remove_folders = BooleanPropertyDescriptor()
@@ -570,7 +506,7 @@ class FSEntryParamsFlatten(FSEntryParamsExt):
 class FSEntryParamsOrganize(FSEntryParamsExt):
     ''' Organize Entry attributes
     '''
-    fs_entry_builder = LazyClassPropertyDescriptor('reny.fstools.builders.fsb.FSEntryBuilderOrganizeWorker')
+    fs_entry_builder = FSEntryBuilderOrganizeWorker
 
     by = PropertyDescriptor()
     date_format = PropertyDescriptor()
