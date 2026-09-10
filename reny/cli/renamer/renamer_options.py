@@ -23,43 +23,54 @@
       . display sorting:
           .. by size/date, ascending/descending
       . action commands:
-          .. print      Prints source directory
-          .. index      Adds index to files and directories names
-          .. add_date   Adds date to files and directories names
-          .. add_text   Adds text to files and directories names
-          .. remove     Removes n characters from files and directories names
-          .. replace    RegExp-based replace in files and directories names,
-                                        with support for expandable templates
-          .. capitalize Capitalizes words in files / directories names
-          .. flatten    Flatten all folders below target level, moving the files up
-                            at the target level. By default, deletes all empty flattened folders
+          .. print      Print source directory tree (default)
+          .. stats      Print overall directory statistics
+          .. index      Add sequential or directory-scoped numeric indices
+          .. pad        Pad numbers with leading zeros
+          .. add_date   Add formatted date as prefix or suffix
+          .. add_text   Add arbitrary text as prefix or suffix
+          .. remove     Remove n characters from filename head or tail
+          .. replace    RegExp-based replace in files and directories names
+          .. capitalize Capitalize words in file and directory names
+          .. flatten    Flatten folders below target level
+          .. organize   Organize files into subdirectories by type or date
           .. delete     Delete selected files and directories
+          .. config     Generate or edit config.toml template
+          .. ignore     Generate or edit .renyignore template
+          .. version    Display Reny version info
+          .. info       Display Reny overview and capabilities
 
-    Usage: renamer [-h] [-d DIR] [-f FILE] [GLobal Options] {Commands}[Commands Options]
+    Usage: reny [-h] [-d DIR] [-f FILE] [Global Options] <command> [Command Options]
       Input source mode:
-        [-d, --dir]                 Source directory (default is the current directory)
+        [-d, --dir]                 Source directory (default is current directory)
         [-f, --file]                File to process
 
       Recursion mode:
         [-r, --recursive]           Recurse into nested folders
+        [-sl, --start-level]        Initial nested level for printing
         [-el, --end-level]          End level for recursion into nested folders
 
       Filter files or folders:
         [-in, --include]            Include: Unix-style name patterns separated by ';'
         [-ex, --exclude]            Exclude: Unix-style name patterns separated by ';'
-                                      (excludes hidden files by default)
-        [-fd, --filter-dirs]        Enable  Include/Exclude patterns on directories
+        [-ig, --ignore-file]        Read patterns from custom ignore file
+        [-ad, --all-dirs]           Disable Include/Exclude patterns on directories
         [-af, --all-files]          Disable Include/Exclude patterns on files
-                                      (shows hidden files excluded by default)
-      Miscellaneous:
-        [-s, --sort]{na|nd|sa|sd}   Sort order for files / folders (name | date, asc | desc)
-        [-ni, nested-indent]        Indent for printing nested directories
-        [-q, --quiet]               Do not visualise changes / show messages during processing
 
-      Commands:
-        {print, index, add_date, add_text, remove, replace, capitalize, flatten, delete, version, info}
-        epilog = '''Usage examples:
-        $ reny {command} -h  #run this for detailed help on individual commands
+      Git Integration:
+        [-g, --git]                 Show git status
+        [-go, --git-only]           Show only files with git status modifications
+        [-gt, --git-tracked]        Show only git tracked files
+        [-ngt, --not-git-tracked]   Show only files not tracked in git
+        [-gi, --git-ignored]        Show only git ignored files
+
+      Miscellaneous:
+        [-s, --sort]                Sort order: na, nd, sa, sd, da, dd
+        [-q, --quiet]               Do not visualise changes / show messages
+        [-c, --color]               Color output (0 or 1)
+
+      Usage examples:
+        $ reny {command} -h         # run this for detailed help on individual commands
         '''"""
 import sys
 from argparse import SUPPRESS

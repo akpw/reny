@@ -44,6 +44,31 @@ pipx install reny
 - *Padding*: Automatically pad existing numbers in filenames with leading zeros to fix sorting orders
 - *Flattening*: Safely collapse nested directory structures into a single folder
 - *Regex Replacement*: Powerful batch renaming using standard regular expressions
+- *Directory Statistics*: Fast summary of total files, directories, and disk space usage
+- *Flexible CLI Parsing*: Position-independent options that work before or after subcommands
+
+## Commands Summary
+
+| Command | Description | Example |
+|---|---|---|
+| `print` | Visualize directory tree structure (default) | `reny -el 2` |
+| `stats` | Overall file & directory count and size statistics | `reny stats` |
+| `index` | Numeric indexing (sequential or directory-scoped) | `reny index -sf 1 -md 2` |
+| `pad` | Pad numbers with leading zeros | `reny pad -md 3` |
+| `add_date` | Add formatted date timestamp as prefix or suffix | `reny add_date -ap -fm '%Y-%m-%d'` |
+| `add_text` | Add arbitrary text as prefix or suffix | `reny add_text -ap -tx 'archived_'` |
+| `remove` | Remove N characters from filename head or tail | `reny remove -nc 3 -ft` |
+| `replace` | Regex find-and-replace with expandable templates | `reny replace -fs ' ' -rs '_'` |
+| `capitalize` | Capitalize words in file and folder names | `reny capitalize` |
+| `flatten` | Collapse directory hierarchy below target depth | `reny flatten -tl 1` |
+| `organize` | Organize files into subdirectories by type or date | `reny organize -b type` |
+| `delete` | Batch delete matching files and folders safely | `reny -gi delete -id` |
+| `config` | Generate or edit local or global `config.toml` | `reny config --local` |
+| `ignore` | Generate or edit `.renyignore` template file | `reny ignore` |
+| `version` / `info` | Display version information or overview | `reny version` |
+
+> [!TIP]
+> **Flexible Argument Order**: Global flags (`-d`, `-r`, `-el`, `-ex`, `-in`, `-q`, `-g`, `-s`) can be placed either before or after subcommands (e.g., `reny pad -d ./photos -md 3` and `reny -d ./photos pad -md 3` are equivalent).
 
 ## Usage & Examples
 
@@ -195,7 +220,21 @@ Similarly, you can use the `--git-tracked` (or `-gt`) flag to filter the view so
 
 Complementary to this, the `--not-git-tracked` (`-ngt`) flag displays only files that are currently untracked, and `--git-ignored` (`-gi`) reveals all explicitly ignored files (e.g., build artifacts, `__pycache__`, or `.DS_Store` hidden by `.gitignore`). Note that both `-ngt` and `-gi` bypass `reny`'s internal `.renyignore` to ensure you see the true, unvarnished state of your Git repository.
 
-### 8. Advanced Batch Renaming (Commands)
+### 8. Directory Statistics (`reny stats`)
+Quickly calculate total file count, directory count, and total disk usage across matching paths:
+```bash
+reny stats
+```
+```text
+Overall directory statistics might take a while...
+/../_Dev/reny
+  Total files: 4
+  Total directores: 17
+  Total size: 22.4MB
+```
+You can combine `stats` with any filter or recursion depth (e.g. `reny -el 2 -in '*.py' stats`).
+
+### 9. Advanced Batch Renaming (Commands)
 When you are ready to modify your files, `reny` operates purely as a dry-run by default. It safely visualizes all targeted changes and asks for confirmation before any files are moved or renamed.
 
 `reny` supports a variety of targeted commands for bulk renaming:
@@ -216,6 +255,43 @@ reny -r -in '*.txt' index -sq
 Pad existing numbers with leading zeros (e.g., `2.png` becomes `02.png`):
 ```bash
 reny pad -md 2
+```
+
+**Adding Dates (`add_date`, `-ap`/`--as-prefix`, `-fm`/`--format`, `-js`/`--join-string`)**
+
+Add a formatted date timestamp to filenames as a prefix or suffix:
+```bash
+# Prepend current date (YYYY-MM-DD_) to all JPEG images
+reny -in '*.jpg' add_date -ap -fm '%Y-%m-%d'
+
+# Append date as suffix using custom join string
+reny -in '*.log' add_date -fm '%Y%m%d' -js '_'
+```
+
+**Adding Text (`add_text`, `-ap`/`--asprefix`, `-tx`/`--text`, `-js`/`--join-string`)**
+
+Add arbitrary text as a prefix or suffix:
+```bash
+# Prepend 'archived_' to all PDF files
+reny -in '*.pdf' add_text -ap -tx 'archived'
+```
+
+**Removing Characters (`remove`, `-nc`/`--num-chars`, `-ft`/`--from-tail`)**
+
+Strip N characters from the beginning or end of filenames:
+```bash
+# Remove first 4 characters from filenames
+reny remove -nc 4
+
+# Remove last 3 characters from filename tails (preserves extension)
+reny remove -nc 3 -ft
+```
+
+**Capitalize (`capitalize`)**
+
+Automatically capitalize words in selected file and folder names:
+```bash
+reny capitalize
 ```
 
 **Flattening (`flatten`, `-tl`/`--target-level`)**
@@ -244,8 +320,8 @@ The following files / folders will be deleted
     |-  0KB CACHEDIR.TAG
     |-  0KB README.md
   |->/ 103KB dist
-    |-  56KB reny-1.0.12-py3-none-any.whl
-    |-  47KB reny-1.0.12.tar.gz
+    |-  56KB reny-1.1.0-py3-none-any.whl
+    |-  47KB reny-1.1.0.tar.gz
   |->/ 13KB reny.egg-info
     |-  0KB dependency_links.txt
     |-  0KB entry_points.txt
