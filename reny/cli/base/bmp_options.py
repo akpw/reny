@@ -32,7 +32,7 @@
 import os
 import string
 import sys
-from argparse import ArgumentParser, HelpFormatter
+from argparse import ArgumentParser, HelpFormatter, SUPPRESS
 from urllib.parse import urlparse
 
 from reny.commons.utils import MiscHelpers, strtobool
@@ -349,21 +349,113 @@ class BatchMPArgParser:
                     help="Show only git ignored files (bypasses .renyignore)", 
                     action="store_true")
 
+    def _get_subcommand_common_parser(self):
+        """Builds a parent parser with common options using default=SUPPRESS
+        so options like -d, -r, -ex can be passed either before or after subcommands.
+        Groups match the global options structure for visual consistency.
+        """
+        common = ArgumentParser(add_help=False)
+
+        source_mode_group = common.add_argument_group('Input source mode')
+        source_mode_group.add_argument("-d", "--dir", dest="dir",
+                    type=lambda d: self._is_valid_dir_path(common, d),
+                    help="Source directory (default is current directory)",
+                    default=SUPPRESS)
+        source_mode_group.add_argument("-f", "--file", dest="file",
+                    type=lambda f: self._is_valid_file_path(common, f),
+                    help="File to process",
+                    default=SUPPRESS)
+
+        recursive_mode_group = common.add_argument_group('Recursion mode')
+        recursive_mode_group.add_argument("-r", "--recursive", dest="recursive",
+                    help="Recursive mode (optional if -el is specified)",
+                    action="store_true",
+                    default=SUPPRESS)
+        recursive_mode_group.add_argument("-sl", "--start-level", dest="start_level",
+                    help="Initial nested level for printing (0, i.e. root source directory by default)",
+                    type=int,
+                    default=SUPPRESS)
+        recursive_mode_group.add_argument("-el", "--end-level", dest="end_level",
+                    help="Target level for recursive descent (makes -r optional, automatically adjusts to match -sl if smaller)",
+                    type=int,
+                    default=SUPPRESS)
+
+        include_mode_group = common.add_argument_group('Filter files or folders')
+        include_mode_group.add_argument("-in", "--include", dest="include",
+                    help="Include: Unix-style name patterns separated by ';'",
+                    type=str,
+                    default=SUPPRESS)
+        include_mode_group.add_argument("-ex", "--exclude", dest="exclude",
+                    help="Exclude: Unix-style name patterns separated by ';' (excludes hidden files by default)",
+                    type=str,
+                    default=SUPPRESS)
+        include_mode_group.add_argument("-ig", "--ignore-file", dest="ignore_file",
+                    help="Ignore file: Read Unix-style name patterns from a custom file",
+                    type=str,
+                    default=SUPPRESS)
+        include_mode_group.add_argument("-ad", "--all-dirs", dest="all_dirs",
+                    help="Disable Include/Exclude patterns on directories",
+                    action="store_true",
+                    default=SUPPRESS)
+        include_mode_group.add_argument("-af", "--all-files", dest="all_files",
+                    help="Disable Include/Exclude patterns on files (shows hidden files excluded by default)",
+                    action="store_true",
+                    default=SUPPRESS)
+
+        git_group = common.add_argument_group('Git Integration')
+        git_group.add_argument("-g", "--git", dest="git",
+                    help="Show git status",
+                    action="store_true",
+                    default=SUPPRESS)
+        git_group.add_argument("-go", "--git-only", dest="git_only",
+                    help="Show only files with git status modifications",
+                    action="store_true",
+                    default=SUPPRESS)
+        git_group.add_argument("-gt", "--git-tracked", dest="git_tracked",
+                    help="Show only git tracked files",
+                    action="store_true",
+                    default=SUPPRESS)
+        git_group.add_argument("-ngt", "--not-git-tracked", dest="not_git_tracked",
+                    help="Show only files not tracked in git (bypasses .renyignore)",
+                    action="store_true",
+                    default=SUPPRESS)
+        git_group.add_argument("-gi", "--git-ignored", dest="git_ignored",
+                    help="Show only git ignored files (bypasses .renyignore)",
+                    action="store_true",
+                    default=SUPPRESS)
+
+        misc_group = common.add_argument_group('Miscellaneous')
+        misc_group.add_argument("-s", "--sort", dest="sort",
+                    help="Sorting for files ('na', i.e. by name ascending by default). Also 'sa'/'sd' for size, 'da'/'dd' for date.",
+                    choices=['na', 'nd', 'sa', 'sd', 'da', 'dd'],
+                    default=SUPPRESS)
+        misc_group.add_argument("-q", "--quiet", dest="quiet",
+                    help="Disable visualising changes & displaying info messages during processing",
+                    action="store_true",
+                    default=SUPPRESS)
+        misc_group.add_argument("-c", "--color", dest="color",
+                    help="Color output (0 or 1, default 1)",
+                    type=int, choices=[0, 1],
+                    default=SUPPRESS)
+        return common
+
     @staticmethod
     def _add_version(parser):
         ''' Adds the version command
         '''
         parser.add_parser(BatchMPBaseCommands.VERSION,
-                                description = 'Displays BatchMP version info',
-                                        formatter_class=BatchMPHelpFormatter)
+                                description = 'Displays Reny version info',
+                                help = 'Display Reny version info',
+                                formatter_class=BatchMPHelpFormatter)
 
     @staticmethod
     def _add_info(parser):
         ''' Adds the info command
         '''
         parser.add_parser(BatchMPBaseCommands.INFO,
-                                description = 'Displays BatchMP info',
-                                        formatter_class=BatchMPHelpFormatter)
+                                description = 'Displays Reny overview and capabilities',
+                                help = 'Display Reny overview and usage',
+                                formatter_class=BatchMPHelpFormatter)
 
     @staticmethod
     def _add_ignore(parser):
@@ -371,7 +463,8 @@ class BatchMPArgParser:
         '''
         init_parser = parser.add_parser(BatchMPBaseCommands.IGNORE,
                                 description = 'Generates a default .renyignore template file',
-                                        formatter_class=BatchMPHelpFormatter)
+                                help = 'Generate a default .renyignore template file',
+                                formatter_class=BatchMPHelpFormatter)
         init_parser.add_argument('-gl', '--global', dest='global_ignore',
                                  action='store_true',
                                  help='Generate the template globally (~/.renyignore)')
@@ -382,7 +475,8 @@ class BatchMPArgParser:
         '''
         config_parser = parser.add_parser(BatchMPBaseCommands.CONFIG,
                                 description = 'Generates a default config.toml template file (~/.config/reny/config.toml)',
-                                        formatter_class=BatchMPHelpFormatter)
+                                help = 'Generate a default config.toml template file',
+                                formatter_class=BatchMPHelpFormatter)
         config_parser.add_argument('-l', '--local', dest='local_config',
                                  action='store_true',
                                  help='Generate the config template locally (./.reny.toml)')

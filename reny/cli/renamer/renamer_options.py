@@ -62,6 +62,7 @@
         $ reny {command} -h  #run this for detailed help on individual commands
         '''"""
 import sys
+from argparse import SUPPRESS
 from reny.cli.base.bmp_options import BatchMPArgParser, BatchMPHelpFormatter, BatchMPBaseCommands
 
 
@@ -119,7 +120,9 @@ class RenameArgParser(BatchMPArgParser):
         # Commands
         subparsers = parser.add_subparsers(dest = 'sub_cmd',
                                                 title = 'Reny Commands',
-                                                        metavar = RenamerCommands.commands_meta())
+                                                metavar = '<command>')
+        common = self._get_subcommand_common_parser()
+
         self._add_version(subparsers)
         self._add_info(subparsers)
         self._add_ignore(subparsers)
@@ -134,46 +137,87 @@ class RenameArgParser(BatchMPArgParser):
                 help = "Exclude files from processing",
                 action = 'store_true')
 
-        # Print (hidden)
+        # Print (default)
         print_parser = subparsers.add_parser(RenamerCommands.PRINT,
-                                                description = 'Print source directory (default command, optional)',
+                                                description = 'Print source directory tree and file listing',
+                                                help = 'Print directory tree (default command)',
+                                                parents = [common],
                                                 formatter_class = BatchMPHelpFormatter)
+        print_media_group = print_parser.add_argument_group('File media types')
+        print_media_group.add_argument("-ft", "--file-type", dest = "file_type",
+                    help = "File Media Type",
+                    type = str,
+                    choices = ['image', 'video', 'audio', 'media', 'nonmedia', 'playable', 'nonplayable', 'any'],
+                    default = SUPPRESS)
+        print_view_group = print_parser.add_argument_group('Virtual Views & Organization')
+        print_view_group.add_argument('-b', '--by', dest = 'by',
+                help = 'Organization strategy or virtual view by type or date',
+                type = str,
+                choices = ['type', 'date'],
+                default = SUPPRESS)
+        print_view_group.add_argument('-df', '--date-format', dest = 'date_format',
+                help = 'Date format for subdirectories when using -b date (e.g., %%Y/%%m)',
+                type = str,
+                default = SUPPRESS)
+        print_tree_group = print_parser.add_argument_group('Tree display')
+        print_tree_group.add_argument("-ss", "--show-size", dest = 'show_size',
+                    help = "Show files size",
+                    action = 'store_true',
+                    default = SUPPRESS)
+        print_tree_group.add_argument('-ni', '--nested_indent', dest = 'nested_indent',
+                    help = "Indent for printing nested directories",
+                    type = str,
+                    default = SUPPRESS)
 
         # Stats
         stats_parser = subparsers.add_parser(RenamerCommands.STATS,
                                                 description = 'Prints directory stats',
+                                                help = 'Print overall directory statistics',
+                                                parents = [common],
                                                 formatter_class = BatchMPHelpFormatter)
-
+        stats_media_group = stats_parser.add_argument_group('File media types')
+        stats_media_group.add_argument("-ft", "--file-type", dest = "file_type",
+                    help = "File Media Type",
+                    type = str,
+                    choices = ['image', 'video', 'audio', 'media', 'nonmedia', 'playable', 'nonplayable', 'any'],
+                    default = SUPPRESS)
 
         # Flatten
         flatten_parser = subparsers.add_parser(RenamerCommands.FLATTEN,
-                description = 'Flatten all folders below target level, moving the files up the target level. \
-                                                  By default, all empty flattened folders will be deleted.',
+                description = 'Flatten all folders below target level, moving the files up the target level. ' \
+                              'By default, all empty flattened folders will be deleted.',
+                help = 'Flatten folder hierarchies below target level',
+                parents = [common],
                 formatter_class = BatchMPHelpFormatter)
-        flatten_parser.add_argument('-tl', '--target-level', dest = 'target_level',
+        _add_include_mode_group(flatten_parser)
+        flatten_group = flatten_parser.add_argument_group('Flatten Options')
+        flatten_group.add_argument('-tl', '--target-level', dest = 'target_level',
                 help = 'Target level below which all folders will be flattened',
                 type = int,
                 required = True)
-        flatten_parser.add_argument('-dfl', '--discard-flattened', dest = 'discard_flattened',
-                help = "What to do with flattened directories: \
-                              'de' (default) will remove flattened directories if they are empty \
-                              'le' will leave flattened directories (empty or not) \
-                              'da' will discard flattened directories even if they are not empty",
+        flatten_group.add_argument('-dfl', '--discard-flattened', dest = 'discard_flattened',
+                help = "What to do with flattened directories: " \
+                       "'de' (default) will remove flattened directories if they are empty " \
+                       "'le' will leave flattened directories (empty or not) " \
+                       "'da' will discard flattened directories even if they are not empty",
                 type=str,
                 choices = ['de', 'le', 'da'],
                 default = 'de')
-        self._add_arg_display_curent_state_mode(flatten_parser)
+        self._add_arg_display_curent_state_mode(flatten_group)
 
         # Add index
         add_index_parser = subparsers.add_parser(RenamerCommands.INDEX,
                                                  description = 'Adds index to files and directories names',
-                                                formatter_class = BatchMPHelpFormatter)
-        add_index_parser.add_argument('-sf', '--start-from', dest = 'start_from',
+                                                 help = 'Add sequential or directory-scoped numeric indices',
+                                                 parents = [common],
+                                                 formatter_class = BatchMPHelpFormatter)
+        _add_include_mode_group(add_index_parser)
+        index_group = add_index_parser.add_argument_group('Index Options')
+        index_group.add_argument('-sf', '--start-from', dest = 'start_from',
                 help = 'A number from which the indexing starts (1 by default)',
                 type = int,
                 default = 1)
-
-        add_index_type_group = add_index_parser.add_mutually_exclusive_group()
+        add_index_type_group = index_group.add_mutually_exclusive_group()
         add_index_type_group.add_argument('-sq', '--sequential', dest = 'sequential',
                 help = 'Index selected files sequentially across selected directores. ' \
                        'If omitted, the files will instead be indexed within their respective directories (multi-level indexing)',
@@ -182,138 +226,161 @@ class RenameArgParser(BatchMPArgParser):
                 help = 'Index selected files via adding their respective directory counter. ' \
                        'If omitted, the files will instead be indexed within their respective directories (multi-level indexing)',
                 action = 'store_true')
-        add_index_parser.add_argument('-as', '--as-suffix', dest = 'as_suffix',
+        index_group.add_argument('-as', '--as-suffix', dest = 'as_suffix',
                 help = 'Add index at the end of file names',
                 action = 'store_true')
-        add_index_parser.add_argument('-js', '--join-string', dest = 'join_str',
+        index_group.add_argument('-js', '--join-string', dest = 'join_str',
                 help = "Join string for appending indices (' ' by default)",
                 type = str,
                 default = ' ')
-        add_index_parser.add_argument('-md', '--min-digits', dest = 'min_digits',
+        index_group.add_argument('-md', '--min-digits', dest = 'min_digits',
                 help = 'Minimal number of digits for indexing (2 by default, and adding leading zeros as needed)',
                 type = int,
                 default = 2)
-        _add_include_mode_group(add_index_parser)
-        self._add_arg_display_curent_state_mode(add_index_parser)
+        self._add_arg_display_curent_state_mode(index_group)
 
         # Pad Numbers
         pad_parser = subparsers.add_parser(RenamerCommands.PAD,
                                                 description = 'Pads numbers in files and directories names with leading zeros',
+                                                help = 'Pad numbers with leading zeros',
+                                                parents = [common],
                                                 formatter_class = BatchMPHelpFormatter)
-        pad_parser.add_argument('-md', '--min-digits', dest = 'min_digits',
+        _add_include_mode_group(pad_parser)
+        pad_group = pad_parser.add_argument_group('Pad Options')
+        pad_group.add_argument('-md', '--min-digits', dest = 'min_digits',
                 help = 'Minimal number of digits to pad to (2 by default, and adding leading zeros as needed)',
                 type = int,
                 default = 2)
-        _add_include_mode_group(pad_parser)
-        self._add_arg_display_curent_state_mode(pad_parser)
+        self._add_arg_display_curent_state_mode(pad_group)
 
         # Add Date
         add_date_parser = subparsers.add_parser(RenamerCommands.ADD_DATE,
                                                 description = 'Adds date to files and directories names',
+                                                help = 'Add formatted date as prefix or suffix',
+                                                parents = [common],
                                                 formatter_class = BatchMPHelpFormatter)
-        add_date_parser.add_argument('-ap', '--as-prefix', dest = 'as_prefix',
+        _add_include_mode_group(add_date_parser)
+        date_group = add_date_parser.add_argument_group('Add Date Options')
+        date_group.add_argument('-ap', '--as-prefix', dest = 'as_prefix',
                 help = 'Add date as a prefix to file names',
                 action = 'store_true')
-        add_date_parser.add_argument('-js', '--join-string', dest = 'join_str',
+        date_group.add_argument('-js', '--join-string', dest = 'join_str',
                 help = "Join string for appending dates ('_' by default)",
                 type = str,
                 default = '_')
-        add_date_parser.add_argument('-fm', '--format', dest = 'format',
+        date_group.add_argument('-fm', '--format', dest = 'format',
                 help = 'Date format',
                 type = str,
                 default = '%Y-%m-%d')
-        _add_include_mode_group(add_date_parser)
-        self._add_arg_display_curent_state_mode(add_date_parser)
+        self._add_arg_display_curent_state_mode(date_group)
 
         # Add Text
         add_text_parser = subparsers.add_parser(RenamerCommands.ADD_TEXT,
                                                 description = 'Adds text to files and directories names',
+                                                help = 'Add arbitrary text as prefix or suffix',
+                                                parents = [common],
                                                 formatter_class = BatchMPHelpFormatter)
-        add_text_parser.add_argument('-ap', '--asprefix', dest = 'as_prefix',
+        _add_include_mode_group(add_text_parser)
+        text_group = add_text_parser.add_argument_group('Add Text Options')
+        text_group.add_argument('-ap', '--asprefix', dest = 'as_prefix',
                 help = 'Add text as a prefix to file names',
                 action = 'store_true')
-        add_text_parser.add_argument('-js', '--join-string', dest = 'join_str',
+        text_group.add_argument('-js', '--join-string', dest = 'join_str',
                 help = "Join string for appending text ('_' by default)",
                 type = str,
                 default = '_')
-        add_text_parser.add_argument('-tx', '--text', dest = 'text',
+        text_group.add_argument('-tx', '--text', dest = 'text',
                 help = 'Text to add',
                 type = str,
                 required = True)
-        _add_include_mode_group(add_text_parser)
-        self._add_arg_display_curent_state_mode(add_text_parser)
+        self._add_arg_display_curent_state_mode(text_group)
 
         # Remove chars
         remove_chars_parser = subparsers.add_parser(RenamerCommands.REMOVE,
                                             description = 'Removes n characters from files and directories names',
+                                            help = 'Remove N characters from name head or tail',
+                                            parents = [common],
                                             formatter_class = BatchMPHelpFormatter)
-        remove_chars_parser.add_argument('-nc', '--num-chars', dest = 'num_chars',
+        _add_include_mode_group(remove_chars_parser)
+        remove_group = remove_chars_parser.add_argument_group('Remove Options')
+        remove_group.add_argument('-nc', '--num-chars', dest = 'num_chars',
                 help = "Number of characters to remove",
                 type = int,
                 required = True)
-        remove_chars_parser.add_argument('-ft', '--from-tail', dest = 'from_tail',
+        remove_group.add_argument('-ft', '--from-tail', dest = 'from_tail',
                 help = 'Removes text from tail',
                 action = 'store_true')
-        _add_include_mode_group(remove_chars_parser)
-        self._add_arg_display_curent_state_mode(remove_chars_parser)
+        self._add_arg_display_curent_state_mode(remove_group)
 
         # Replace
         replace_parser = subparsers.add_parser(RenamerCommands.REPLACE,
                                             description = 'RegExp-based replace in files and directories names. ' \
                                                    'Supports expandable templates, such as ' \
-                                                   '$dirname, $pardirname, $atime, $ctime, etc. ' \
-                                                   'For media files, also support tag-based templates such as ' \
-                                                   '$title, $album, $artist, $albumartist, $genre, $year, $track, etc.',
+                                                   '$dirname, $pardirname, $atime, $ctime, etc.',
+                                            help = 'Regexp-based find and replace with templates',
+                                            parents = [common],
                                             formatter_class = BatchMPHelpFormatter)
-        replace_parser.add_argument('-fs', '--find-string', dest = 'find_str',
+        _add_include_mode_group(replace_parser)
+        replace_group = replace_parser.add_argument_group('Replace Options')
+        replace_group.add_argument('-fs', '--find-string', dest = 'find_str',
                 help = "Find pattern to look for",
                 type = str,
                 required=True)
-        replace_parser.add_argument('-rs', '--replace-string', dest = 'replace_str',
-                help = 'Replace pattern to replace with.\
-                        If not specified and there is a match from the find pattern, \
-                        the entire string will be replaced with that match. ' \
-                        'Supports the following expandable templates: ' \
-                                                   '$dirname, $pardirname, $adtime, $cdtime, $mdtime, ' \
-                                                   '$atime, $ctime, $mtime, $adate, $cdate, $mdate. ' \
-                                                   'For media files, also support tag-based templates such as ' \
-                                                   '$title, $album, $artist, $albumartist, $genre, $year, $track, etc.',
-                        type = str)
-        replace_parser.add_argument('-ic', '--ignore-case', dest = 'ignore_case',
+        replace_group.add_argument('-rs', '--replace-string', dest = 'replace_str',
+                help = 'Replace pattern to replace with. ' \
+                        'If not specified and there is a match from the find pattern, ' \
+                        'the entire string will be replaced with that match. ' \
+                        'Supports expandable templates: $dirname, $pardirname, $mdate, etc.',
+                type = str)
+        replace_group.add_argument('-ic', '--ignore-case', dest = 'ignore_case',
                 help = 'Case insensitive',
                 action = 'store_true')
-        replace_parser.add_argument('-ie', '--include-extension', dest = 'include_extension',
+        replace_group.add_argument('-ie', '--include-extension', dest = 'include_extension',
                 help = 'Include file extension',
                 action = 'store_true')
-        _add_include_mode_group(replace_parser)
-        self._add_arg_display_curent_state_mode(replace_parser)
+        self._add_arg_display_curent_state_mode(replace_group)
 
         # Capitalize
         capitalize_parser = subparsers.add_parser(RenamerCommands.CAPITALIZE,
                                                 description = 'Capitalizes words in files / directories names',
+                                                help = 'Capitalize words in file and directory names',
+                                                parents = [common],
                                                 formatter_class = BatchMPHelpFormatter)
         _add_include_mode_group(capitalize_parser)
-        self._add_arg_display_curent_state_mode(capitalize_parser)
+        cap_group = capitalize_parser.add_argument_group('Capitalize Options')
+        self._add_arg_display_curent_state_mode(cap_group)
 
         # Delete
         delete_parser = subparsers.add_parser(RenamerCommands.DELETE,
                                             description = 'Delete selected files and directories',
+                                            help = 'Delete selected files and directories',
+                                            parents = [common],
                                             formatter_class = BatchMPHelpFormatter)
         _add_include_mode_group(delete_parser)
-        self._add_arg_display_curent_state_mode(delete_parser)
-
+        del_group = delete_parser.add_argument_group('Delete Options')
+        self._add_arg_display_curent_state_mode(del_group)
 
         # Organize
         organize_parser = subparsers.add_parser(RenamerCommands.ORGANIZE,
                                             description='Organize selected files into directories by specified attributes',
+                                            help='Organize files into subdirectories by type or date',
+                                            parents = [common],
                                             formatter_class=BatchMPHelpFormatter)
-        organize_parser.add_argument('-td', '--target-dir', dest='target_dir',
-                                     help='Target directory to organize files into',
-                                     type=str)
         _add_include_mode_group(organize_parser)
-        self._add_arg_display_curent_state_mode(organize_parser)
-
-
+        org_group = organize_parser.add_argument_group('Organize Options')
+        org_group.add_argument('-b', '--by', dest='by',
+                               help='Organization strategy or virtual view by type or date',
+                               type=str,
+                               choices=['type', 'date'],
+                               required=True)
+        org_group.add_argument('-df', '--date-format', dest='date_format',
+                               help='Date format for subdirectories when using -b date (e.g., %%Y/%%m)',
+                               type=str,
+                               default='%Y-%m-%d')
+        org_group.add_argument('-td', '--target-dir', dest='target_dir',
+                               help='Target directory to organize files into',
+                               type=str)
+        self._add_arg_display_curent_state_mode(org_group)
 
     # Args Checking
     def default_command(self, args, parser):
@@ -324,14 +391,28 @@ class RenameArgParser(BatchMPArgParser):
         '''
         super().check_args(args, parser)
 
+        # Validate subcommand compatibility with global CLI options
+        if ('-b' in sys.argv or '--by' in sys.argv) and args['sub_cmd'] not in (RenamerCommands.PRINT, RenamerCommands.ORGANIZE):
+            parser.error(f"argument -b/--by is not supported for command '{args['sub_cmd']}'")
+
+        if ('-df' in sys.argv or '--date-format' in sys.argv) and args['sub_cmd'] not in (RenamerCommands.PRINT, RenamerCommands.ORGANIZE):
+            parser.error(f"argument -df/--date-format is not supported for command '{args['sub_cmd']}'")
+
+        if ('-ss' in sys.argv or '--show-size' in sys.argv) and args['sub_cmd'] != RenamerCommands.PRINT:
+            parser.error(f"argument -ss/--show-size is not supported for command '{args['sub_cmd']}'")
+
+        if ('-ni' in sys.argv or '--nested_indent' in sys.argv) and args['sub_cmd'] != RenamerCommands.PRINT:
+            parser.error(f"argument -ni/--nested_indent is not supported for command '{args['sub_cmd']}'")
+
+        if ('-ft' in sys.argv or '--file-type' in sys.argv) and args['sub_cmd'] not in (RenamerCommands.PRINT, RenamerCommands.STATS):
+            parser.error(f"argument -ft/--file-type is not supported for command '{args['sub_cmd']}'")
+
         if args['sub_cmd'] == RenamerCommands.FLATTEN:
             if args['file']:
                 parser.error('This operation requires a source directory')
             if '-el' not in sys.argv and '--end-level' not in sys.argv:
                 args['end_level'] = sys.maxsize
             elif args['end_level'] <= args['target_level']:
-                #print ('Target Level should be greater than or equal to the End Level Global Option\n'
-                #           '... Adjusting End Level to: {}'.format(args['target_level']))
                 args['end_level'] = args['target_level']
 
         if args['sub_cmd'] == RenamerCommands.ORGANIZE:
