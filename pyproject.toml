@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reny"
-version = "1.0.16"
+version = "1.1.0"
 description = "A lightweight but powerful filesystem visualizer, batch renamer and organization CLI tool."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -12,21 +12,42 @@ license = { text = "GPL-2.0-or-later" }
 authors = [
     { name = "Arseniy Kuznetsov" }
 ]
-keywords = ["Batch", "Rename", "Organizer", "Filesystem", "Visualizer"]
+keywords = [
+    "batch-rename",
+    "file-renamer",
+    "file-organizer",
+    "filesystem",
+    "visualizer",
+    "directory-tree",
+    "cli",
+    "regex-rename",
+    "flatten",
+    "git"
+]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
     "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
     "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
     "Intended Audience :: Information Technology",
-    "Intended Audience :: Customer Service",
+    "Intended Audience :: End Users/Desktop",
     "Operating System :: MacOS",
     "Operating System :: POSIX :: BSD :: FreeBSD",
     "Operating System :: POSIX :: Linux",
     "Topic :: System",
+    "Topic :: System :: Filesystems",
     "Topic :: System :: Systems Administration",
+    "Topic :: Desktop Environment :: File Managers",
     "Topic :: Utilities"
 ]
 dependencies = [
@@ -41,12 +62,16 @@ test = [
 
 [project.urls]
 Homepage = "https://github.com/akpw/reny"
+Repository = "https://github.com/akpw/reny"
+Issues = "https://github.com/akpw/reny/issues"
+Changelog = "https://github.com/akpw/reny/releases"
 
 [project.scripts]
 reny = "reny.cli.renamer.renamer_dispatch:main"
 
 [tool.setuptools.packages.find]
 include = ["reny*"]
+exclude = ["tests*"]
 
 [tool.setuptools.package-data]
 reny = ["cli/base/*.template"]
